@@ -10,6 +10,6 @@ python3 "$repo_root/scripts/release/generate_icons.py" \
 
 rm -rf "$artifact_dir"
 mkdir -p "$artifact_dir"
-mapfile -t package_paths < <(makepkg --packagelist)
+mapfile -t package_paths < <(makepkg --packagelist | grep -v -- '-debug-')
 makepkg -s --noconfirm --cleanbuild
 cp -v "${package_paths[@]}" "$artifact_dir"/

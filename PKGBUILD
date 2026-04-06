@@ -7,7 +7,7 @@ url="https://github.com/regaan/Zara"
 license=('AGPL3')
 depends=('qt6-base' 'sqlite' 'curl' 'capstone' 'python')
 makedepends=('cmake' 'ninja' 'pkgconf')
-options=('!lto')
+options=('!lto' '!debug')
 source=()
 sha256sums=()
 
