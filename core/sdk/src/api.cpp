@@ -21,7 +21,7 @@
 
 namespace {
 
-constexpr const char* kSdkVersionString = "1.0.0";
+constexpr const char* kSdkVersionString = "1.0.1";
 
 void write_error(const std::string& message, char* buffer, const std::size_t buffer_size) {
     if (buffer == nullptr || buffer_size == 0) {

@@ -43,7 +43,7 @@ if [[ "$mode" == "appimage" || "$mode" == "all" ]]; then
     chmod +x "$LINUXDEPLOY" "$LINUXDEPLOY_PLUGIN_QT" "$APPIMAGETOOL"
     export APPIMAGE_EXTRACT_AND_RUN=1
     export QMAKE="${QMAKE:-qmake6}"
-    export VERSION="${VERSION:-${GITHUB_REF_NAME:-1.0.0}}"
+    export VERSION="${VERSION:-${GITHUB_REF_NAME:-1.0.1}}"
 
     pushd "$artifact_dir" >/dev/null
     "$LINUXDEPLOY" \

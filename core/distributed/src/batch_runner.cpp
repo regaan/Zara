@@ -57,6 +57,7 @@ struct WorkerConnection {
     std::string status;
     std::string last_event;
     std::string last_error;
+    std::string controller_nonce;
     std::chrono::steady_clock::time_point last_activity = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point last_heartbeat = std::chrono::steady_clock::now();
 #if defined(ZARA_HAS_OPENSSL)
@@ -635,10 +636,9 @@ std::string encode_hello_message(const WorkerHello& hello) {
            escape_field(hello.worker_nonce) + '\t' + escape_field(hello.auth_token) + '\n';
 }
 
-std::string encode_result_message(const BatchJobResult& result) {
+std::string build_result_payload(const BatchJobResult& result) {
     std::ostringstream stream;
-    stream << "RESULT\t"
-           << escape_field(result.binary_path.string()) << '\t'
+    stream << escape_field(result.binary_path.string()) << '\t'
            << escape_field(result.project_db_path.string()) << '\t'
            << (result.success ? "ok" : "error") << '\t'
            << result.function_count << '\t'
@@ -647,9 +647,33 @@ std::string encode_result_message(const BatchJobResult& result) {
            << result.export_count << '\t'
            << result.xref_count << '\t'
            << result.string_count << '\t'
-           << escape_field(result.error)
-           << '\n';
+           << escape_field(result.error);
     return stream.str();
+}
+
+std::string sign_result(
+    const std::string& payload,
+    std::string_view controller_nonce,
+    std::string_view shared_secret
+) {
+    const std::string message = "RESULT|" + payload + "|" + std::string(controller_nonce);
+    return hmac_sha256_hex(shared_secret, message);
+}
+
+std::string encode_result_message(
+    const BatchJobResult& result,
+    std::string_view controller_nonce,
+    std::string_view shared_secret
+) {
+    const std::string payload = build_result_payload(result);
+    const std::string hmac = sign_result(payload, controller_nonce, shared_secret);
+    return "RESULT\t" + payload + "\t" + hmac + '\n';
+}
+
+// Legacy overload for local-only batch mode (no signing needed)
+std::string encode_result_message(const BatchJobResult& result) {
+    const std::string payload = build_result_payload(result);
+    return "RESULT\t" + payload + "\t\n";
 }
 
 std::string encode_policy_message(const WorkerPolicy& policy) {
@@ -707,9 +731,13 @@ bool parse_size_field(const std::string_view field, std::size_t& out_value) {
     }
 }
 
-bool decode_result_message(const std::string_view line, BatchJobResult& out_result) {
+bool decode_result_message(
+    const std::string_view line,
+    BatchJobResult& out_result,
+    std::string& out_hmac
+) {
     const auto fields = split_fields(line);
-    if (fields.size() != 11 || fields[0] != "RESULT") {
+    if (fields.size() != 12 || fields[0] != "RESULT") {
         return false;
     }
 
@@ -725,7 +753,30 @@ bool decode_result_message(const std::string_view line, BatchJobResult& out_resu
         return false;
     }
     out_result.error = unescape_field(fields[10]);
+    out_hmac = std::string(fields[11]);
     return true;
+}
+
+bool verify_result_hmac(
+    const BatchJobResult& result,
+    const std::string& received_hmac,
+    std::string_view controller_nonce,
+    std::string_view shared_secret
+) {
+    if (received_hmac.empty()) {
+        return false;  // Unsigned results are rejected in remote mode
+    }
+    const std::string payload = build_result_payload(result);
+    const std::string expected = sign_result(payload, controller_nonce, shared_secret);
+    // Constant-time comparison to prevent timing attacks
+    if (expected.size() != received_hmac.size()) {
+        return false;
+    }
+    volatile unsigned char diff = 0;
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        diff |= static_cast<unsigned char>(expected[i]) ^ static_cast<unsigned char>(received_hmac[i]);
+    }
+    return diff == 0;
 }
 
 bool decode_policy_message(const std::string_view line, WorkerPolicy& out_policy) {
@@ -840,6 +891,20 @@ bool create_server_tls_context(const RemoteOptions& options, TlsContext& out_con
         destroy_tls_context(out_context);
         return false;
     }
+    // D4: Mutual TLS — require and verify client certificates if configured
+    if (options.tls_verify_client) {
+        if (options.tls_ca_certificate.empty()) {
+            out_error = "Mutual TLS requires a CA certificate to verify client certificates.";
+            destroy_tls_context(out_context);
+            return false;
+        }
+        if (SSL_CTX_load_verify_locations(context, options.tls_ca_certificate.string().c_str(), nullptr) != 1) {
+            out_error = tls_error_message("failed to load CA certificate for client verification");
+            destroy_tls_context(out_context);
+            return false;
+        }
+        SSL_CTX_set_verify(context, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+    }
     return true;
 }
 
@@ -879,6 +944,24 @@ bool create_client_tls_context(const RemoteOptions& options, TlsContext& out_con
         return false;
     }
     SSL_CTX_set_verify(context, SSL_VERIFY_PEER, nullptr);
+    // D4: Mutual TLS — load client certificate and key if provided
+    if (!options.tls_client_certificate.empty() && !options.tls_client_private_key.empty()) {
+        if (SSL_CTX_use_certificate_file(context, options.tls_client_certificate.string().c_str(), SSL_FILETYPE_PEM) != 1) {
+            out_error = tls_error_message("failed to load client TLS certificate");
+            destroy_tls_context(out_context);
+            return false;
+        }
+        if (SSL_CTX_use_PrivateKey_file(context, options.tls_client_private_key.string().c_str(), SSL_FILETYPE_PEM) != 1) {
+            out_error = tls_error_message("failed to load client TLS private key");
+            destroy_tls_context(out_context);
+            return false;
+        }
+        if (SSL_CTX_check_private_key(context) != 1) {
+            out_error = tls_error_message("client TLS certificate/key mismatch");
+            destroy_tls_context(out_context);
+            return false;
+        }
+    }
     return true;
 }
 
@@ -1613,6 +1696,7 @@ bool BatchRunner::analyze_remote(
                 .status = "connected",
                 .last_event = "handshake completed",
                 .last_error = {},
+                .controller_nonce = {},
                 .last_activity = std::chrono::steady_clock::now(),
                 .last_heartbeat = std::chrono::steady_clock::now(),
 #if defined(ZARA_HAS_OPENSSL)
@@ -1629,6 +1713,10 @@ bool BatchRunner::analyze_remote(
             close_listener();
             return false;
         }
+        // NOTE [D5]: Platform allowlist is advisory — the worker self-reports its platform string,
+        // so a malicious worker can spoof it. This check provides defense-in-depth against
+        // misconfiguration, not against adversarial workers. mTLS (D4) is the correct mitigation
+        // for untrusted worker identity.
         if (!remote_options.allowed_platforms.empty() &&
             std::find(
                 remote_options.allowed_platforms.begin(),
@@ -1646,15 +1734,17 @@ bool BatchRunner::analyze_remote(
         append_batch_event(out_result, workers.back(), "worker-connected", workers.back().host + " (" + workers.back().platform + ")");
 
         std::string write_error;
+        const std::string per_worker_nonce = random_nonce();
         WorkerPolicy policy{
             .protocol_version = remote_options.protocol_version,
             .max_jobs_per_worker = remote_options.max_jobs_per_worker,
             .read_timeout_ms = remote_options.read_timeout_ms,
             .max_message_bytes = remote_options.max_message_bytes,
             .heartbeat_interval_ms = remote_options.heartbeat_interval_ms,
-            .controller_nonce = random_nonce(),
+            .controller_nonce = per_worker_nonce,
             .auth_token = {},
         };
+        workers.back().controller_nonce = per_worker_nonce;
         policy.auth_token = build_policy_token(policy, hello.worker_nonce, shared_secret);
         if (!write_line(
                 TransportConnection{
@@ -1848,8 +1938,20 @@ bool BatchRunner::analyze_remote(
             }
 
             BatchJobResult job_result;
-            if (!decode_result_message(line, job_result)) {
+            std::string result_hmac;
+            if (!decode_result_message(line, job_result, result_hmac)) {
                 out_error = "Remote worker returned an invalid result message.";
+                for (auto& connection : workers) {
+                    close_connection(connection);
+                }
+#if defined(ZARA_HAS_OPENSSL)
+                destroy_tls();
+#endif
+                close_listener();
+                return false;
+            }
+            if (!verify_result_hmac(job_result, result_hmac, worker.controller_nonce, shared_secret)) {
+                out_error = "Remote worker result integrity check failed (HMAC mismatch).";
                 for (auto& connection : workers) {
                     close_connection(connection);
                 }
@@ -2121,7 +2223,7 @@ bool BatchRunner::run_remote_worker(
         ++completed_jobs;
         {
             std::lock_guard lock(write_mutex);
-            if (!write_line(transport, encode_result_message(result), out_error)) {
+            if (!write_line(transport, encode_result_message(result, policy.controller_nonce, shared_secret), out_error)) {
                 close_transport_connection(transport);
 #if defined(ZARA_HAS_OPENSSL)
                 destroy_tls();

@@ -153,8 +153,31 @@ public:
             return false;
         }
 
+        // DB1: Pre-check ptrace permissions to provide clear error messages
+        {
+            std::ifstream yama_scope("/proc/sys/kernel/yama/ptrace_scope");
+            if (yama_scope) {
+                int scope = 0;
+                yama_scope >> scope;
+                if (scope >= 2) {
+                    out_error = "ptrace attach denied: /proc/sys/kernel/yama/ptrace_scope is " +
+                                std::to_string(scope) + " (admin-only). Run as root or set ptrace_scope to 0.";
+                    return false;
+                }
+                if (scope == 1 && getuid() != 0) {
+                    // scope 1 = restricted to parent processes only, attach will likely fail
+                    // unless CAP_SYS_PTRACE is set. We try anyway but warn in error.
+                }
+            }
+        }
+
         if (ptrace(PTRACE_ATTACH, process_id, nullptr, nullptr) != 0) {
-            out_error = system_error_message("ptrace attach failed");
+            if (errno == EPERM) {
+                out_error = "ptrace attach denied: insufficient privileges. "
+                            "Try running as root or granting CAP_SYS_PTRACE capability.";
+            } else {
+                out_error = system_error_message("ptrace attach failed");
+            }
             return false;
         }
 

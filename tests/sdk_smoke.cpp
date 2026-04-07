@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
         return 13;
     }
 
-    if (std::string(zara_sdk_version_string()) != "1.0.0" || zara_sdk_abi_version() != 1U) {
+    if (std::string(zara_sdk_version_string()) != "1.0.1" || zara_sdk_abi_version() != 1U) {
         zara_sdk_close_project(project);
         std::cerr << "unexpected sdk version metadata\n";
         return 14;

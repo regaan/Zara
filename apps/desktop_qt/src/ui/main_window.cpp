@@ -527,9 +527,19 @@ void MainWindow::create_layout() {
     connect(startup_resume_button_, &QPushButton::clicked, this, [this]() {
         const QString project_path = settings_.value("workspace/project_db").toString();
         if (!project_path.isEmpty() && QFileInfo::exists(project_path)) {
+            // Q1: Validate the project path is within the app data directory
+            const QString canonical = QFileInfo(project_path).canonicalFilePath();
+            const QString app_data_root =
+                QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).isEmpty()
+                    ? QDir::home().filePath(".zara")
+                    : QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+            if (!canonical.startsWith(QDir(app_data_root).canonicalPath())) {
+                statusBar()->showMessage("Workspace project path rejected: outside application data directory.", 5000);
+                return;
+            }
             const int tab_index = settings_.value("workspace/tab_index", 0).toInt();
             const qulonglong selected_function = settings_.value("workspace/selected_function", 0).toULongLong();
-            if (load_project(std::filesystem::path(project_path.toStdString()), true)) {
+            if (load_project(std::filesystem::path(canonical.toStdString()), true)) {
                 workspace_tabs_->setCurrentIndex(std::max(0, tab_index));
                 if (selected_function != 0U) {
                     select_function_entry(selected_function, false);
@@ -2576,11 +2586,13 @@ std::filesystem::path MainWindow::project_database_path_for_binary(const std::fi
             : QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QDir project_dir(app_data_root);
     project_dir.mkpath("projects");
+    // Q2: Use SHA-256 truncated to 32 hex chars (128 bits) instead of SHA-1/12 chars (48 bits)
+    // to make database filename hash collisions computationally infeasible.
     const QByteArray digest = QCryptographicHash::hash(
         QString::fromStdString(binary_path.string()).toUtf8(),
-        QCryptographicHash::Sha1
+        QCryptographicHash::Sha256
     ).toHex()
-         .left(12);
+         .left(32);
     return std::filesystem::path(
         project_dir.filePath(
             QString("projects/%1-%2.sqlite")

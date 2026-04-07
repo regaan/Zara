@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 
 project(
     Zara
-    VERSION 1.0.0
+    VERSION 1.0.1
     DESCRIPTION "Native reverse engineering framework for binary analysis, decompilation, and debugging"
     LANGUAGES CXX
 )

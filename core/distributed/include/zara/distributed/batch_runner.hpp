@@ -82,9 +82,12 @@ struct RemoteOptions {
     bool use_tls = false;
     bool require_tls_for_remote = true;
     bool tls_insecure_skip_verify = false;
+    bool tls_verify_client = false;  // D4: Enable mutual TLS — controller verifies client certs
     std::filesystem::path tls_certificate;
     std::filesystem::path tls_private_key;
     std::filesystem::path tls_ca_certificate;
+    std::filesystem::path tls_client_certificate;   // D4: Client cert for mTLS (worker side)
+    std::filesystem::path tls_client_private_key;    // D4: Client key for mTLS (worker side)
 };
 
 class BatchRunner {

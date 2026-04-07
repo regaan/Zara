@@ -1,5 +1,5 @@
 pkgname=zara-re-platform
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Native reverse engineering framework for binary analysis, decompilation, debugging, and automation"
 arch=('x86_64' 'aarch64')

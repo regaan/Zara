@@ -2381,6 +2381,18 @@ bool PythonEngine::run_repl(std::string& out_error) {
     }
     (void)main_module;
 
+    // SC1: Security disclaimer — the REPL is NOT sandboxed like plugins.
+    // It runs arbitrary code in-process with full permissions.
+    std::fprintf(stderr,
+        "╔══════════════════════════════════════════════════════════════╗\n"
+        "║  ZARA SCRIPTING REPL — SECURITY NOTICE                     ║\n"
+        "║                                                            ║\n"
+        "║  This REPL executes code with FULL process privileges.     ║\n"
+        "║  Unlike plugins, there is NO sandbox or resource limit.    ║\n"
+        "║  Do not paste untrusted code. Use Ctrl+D to exit.          ║\n"
+        "╚══════════════════════════════════════════════════════════════╝\n"
+    );
+
     if (PyRun_InteractiveLoop(stdin, "<zara-repl>") != 0) {
         out_error = fetch_python_error();
         return false;

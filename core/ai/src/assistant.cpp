@@ -556,12 +556,59 @@ std::string join(const std::vector<std::string>& values) {
     return stream.str();
 }
 
+// A1: Sanitize binary-derived text before inserting into LLM prompts.
+// Strips control characters, null bytes, and known prompt injection patterns
+// that could alter LLM behavior when analyzing adversarial binaries.
+constexpr std::size_t kMaxPromptFieldLength = 512;
+
+std::string sanitize_prompt_text(const std::string_view raw) {
+    std::string sanitized;
+    sanitized.reserve(std::min(raw.size(), kMaxPromptFieldLength));
+
+    for (std::size_t i = 0; i < raw.size() && sanitized.size() < kMaxPromptFieldLength; ++i) {
+        const unsigned char ch = static_cast<unsigned char>(raw[i]);
+        // Strip null bytes and non-printable control characters
+        if (ch == 0 || (ch < 0x20 && ch != '\t' && ch != '\n' && ch != '\r')) {
+            continue;
+        }
+        // Strip DEL and C1 control block
+        if (ch == 0x7F || (ch >= 0x80 && ch <= 0x9F)) {
+            continue;
+        }
+        sanitized.push_back(static_cast<char>(ch));
+    }
+
+    // Strip known prompt injection markers (case-insensitive)
+    std::string lowered = sanitized;
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    static const std::string_view kInjectionPatterns[] = {
+        "ignore previous", "ignore all previous", "ignore above",
+        "disregard previous", "disregard above", "system prompt",
+        "new instructions", "you are now", "pretend you",
+        "forget everything", "</system>", "<|im_end|>", "<|im_start|>",
+    };
+    for (const auto& pattern : kInjectionPatterns) {
+        if (lowered.find(pattern) != std::string::npos) {
+            return "[sanitized-binary-data]";
+        }
+    }
+
+    if (sanitized.size() >= kMaxPromptFieldLength) {
+        sanitized.resize(kMaxPromptFieldLength - 3);
+        sanitized += "...";
+    }
+    return sanitized;
+}
+
 std::string build_function_model_context(const FunctionContext& context) {
     const auto& function = *context.function;
     std::ostringstream stream;
     stream << "entry=" << format_address(function.entry_address) << '\n';
-    stream << "name=" << function.name << '\n';
-    stream << "section=" << function.section_name << '\n';
+    // A1: Sanitize binary-derived names to prevent prompt injection
+    stream << "name=" << sanitize_prompt_text(function.name) << '\n';
+    stream << "section=" << sanitize_prompt_text(function.section_name) << '\n';
     stream << "blocks=" << function.graph.blocks().size() << '\n';
 
     std::size_t instruction_count = 0;
@@ -573,14 +620,18 @@ std::string build_function_model_context(const FunctionContext& context) {
     stream << "stack_frame_size=" << function.summary.stack_frame_size << '\n';
     stream << "loops=" << function.graph.loops().size() << '\n';
     stream << "switches=" << function.graph.switches().size() << '\n';
-    stream << "imports=" << (context.imports.empty() ? "-" : first_lines(join(context.imports), 1, 256)) << '\n';
-    stream << "strings=" << (context.strings.empty() ? "-" : first_lines(join(context.strings), 3, 256)) << '\n';
+    // A1: Sanitize import names and strings from binary
+    const std::string sanitized_imports = context.imports.empty() ? "-" : first_lines(sanitize_prompt_text(join(context.imports)), 1, 256);
+    const std::string sanitized_strings = context.strings.empty() ? "-" : first_lines(sanitize_prompt_text(join(context.strings)), 3, 256);
+    stream << "imports=" << sanitized_imports << '\n';
+    stream << "strings=" << sanitized_strings << '\n';
     stream << "locals=" << function.summary.locals.size() << '\n';
     stream << "arguments=" << function.summary.arguments.size() << '\n';
     stream << "indirect_targets=" << function.summary.indirect_resolutions.size() << '\n';
     const std::string pseudocode_preview = first_lines(function.decompiled.pseudocode, 10, 900);
     if (!pseudocode_preview.empty()) {
-        stream << "pseudocode:\n" << pseudocode_preview << '\n';
+        // A1: Sanitize decompiled pseudocode (could contain crafted string literals)
+        stream << "pseudocode:\n" << sanitize_prompt_text(pseudocode_preview) << '\n';
     }
     return stream.str();
 }
