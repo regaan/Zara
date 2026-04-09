@@ -24,14 +24,14 @@ def main() -> int:
 
     image = Image.open(source).convert("RGBA")
 
-    linux_icon_path = output_dir / "zara-re-platform-512.png"
+    linux_icon_path = output_dir / "rothalyx-re-framework-512.png"
     linux_icon = image.resize(LINUX_ICON_SIZE, Image.Resampling.LANCZOS)
     linux_icon.save(linux_icon_path, format="PNG")
 
-    ico_path = output_dir / "zara-re-platform.ico"
+    ico_path = output_dir / "rothalyx-re-framework.ico"
     image.save(ico_path, format="ICO", sizes=ICO_SIZES)
 
-    icns_path = output_dir / "zara-re-platform.icns"
+    icns_path = output_dir / "rothalyx-re-framework.icns"
     image.save(icns_path, format="ICNS", sizes=ICNS_SIZES)
 
     print(f"Generated {linux_icon_path}")

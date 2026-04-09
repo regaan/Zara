@@ -1,9 +1,9 @@
-#include "zara/desktop_qt/app/workspace_controller.hpp"
+#include "rothalyx/desktop_qt/app/workspace_controller.hpp"
 
 #include <iomanip>
 #include <sstream>
 
-namespace zara::desktop_qt::app {
+namespace rothalyx::desktop_qt::app {
 
 WorkspaceController::WorkspaceController(std::filesystem::path database_path)
     : repository_(std::move(database_path)) {}
@@ -212,4 +212,4 @@ std::string WorkspaceController::format_successors(const std::vector<std::uint64
     return stream.str();
 }
 
-}  // namespace zara::desktop_qt::app
+}  // namespace rothalyx::desktop_qt::app

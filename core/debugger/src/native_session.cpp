@@ -1,4 +1,4 @@
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 #include <algorithm>
 #include <array>
@@ -18,7 +18,7 @@
 #include <unistd.h>
 #endif
 
-namespace zara::debugger {
+namespace rothalyx::debugger {
 
 #if defined(_WIN32)
 std::unique_ptr<DebugSession> create_windows_debug_session();
@@ -1191,4 +1191,4 @@ std::string_view to_string(const StopReason reason) noexcept {
     }
 }
 
-}  // namespace zara::debugger
+}  // namespace rothalyx::debugger

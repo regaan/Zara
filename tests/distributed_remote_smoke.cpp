@@ -10,7 +10,7 @@
 #include <unistd.h>
 #endif
 
-#include "zara/distributed/batch_runner.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -26,22 +26,22 @@ int main(int argc, char** argv) {
     const std::filesystem::path fixture_b = argv[2];
     const std::vector<std::filesystem::path> inputs{fixture_a, fixture_b};
 
-    const auto output_root = std::filesystem::temp_directory_path() / "zara_distributed_remote_smoke";
+    const auto output_root = std::filesystem::temp_directory_path() / "rothalyx_distributed_remote_smoke";
     std::error_code remove_error;
     std::filesystem::remove_all(output_root, remove_error);
-    const std::string shared_secret = "zara-remote-test-secret";
+    const std::string shared_secret = "rothalyx-remote-test-secret";
 
     const std::uint16_t port = static_cast<std::uint16_t>(39000 + (getpid() % 1000));
 
-    zara::distributed::BatchResult controller_result;
+    rothalyx::distributed::BatchResult controller_result;
     std::string controller_error;
     bool controller_ok = false;
     std::thread controller(
         [&]() {
-            controller_ok = zara::distributed::BatchRunner::analyze_remote(
+            controller_ok = rothalyx::distributed::BatchRunner::analyze_remote(
                 inputs,
                 output_root,
-                zara::distributed::RemoteOptions{
+                rothalyx::distributed::RemoteOptions{
                     .host = "127.0.0.1",
                     .port = port,
                     .expected_workers = 2,
@@ -64,9 +64,9 @@ int main(int argc, char** argv) {
     bool worker_ok_b = false;
     std::thread worker_a(
         [&]() {
-            worker_ok_a = zara::distributed::BatchRunner::run_remote_worker(
+            worker_ok_a = rothalyx::distributed::BatchRunner::run_remote_worker(
                 output_root / "worker_a",
-                zara::distributed::RemoteOptions{
+                rothalyx::distributed::RemoteOptions{
                     .host = "127.0.0.1",
                     .port = port,
                     .shared_secret = shared_secret,
@@ -77,9 +77,9 @@ int main(int argc, char** argv) {
     );
     std::thread worker_b(
         [&]() {
-            worker_ok_b = zara::distributed::BatchRunner::run_remote_worker(
+            worker_ok_b = rothalyx::distributed::BatchRunner::run_remote_worker(
                 output_root / "worker_b",
-                zara::distributed::RemoteOptions{
+                rothalyx::distributed::RemoteOptions{
                     .host = "127.0.0.1",
                     .port = port,
                     .shared_secret = shared_secret,
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
         std::cerr << "unexpected remote worker summary metadata\n";
         return 6;
     }
-    if (controller_result.protocol_version != "zara-batch/2") {
+    if (controller_result.protocol_version != "rothalyx-batch/2") {
         std::cerr << "unexpected remote protocol version\n";
         return 7;
     }
@@ -131,12 +131,12 @@ int main(int argc, char** argv) {
     const auto has_ready_event = std::any_of(
         controller_result.events.begin(),
         controller_result.events.end(),
-        [](const zara::distributed::BatchEvent& event) { return event.kind == "worker-ready"; }
+        [](const rothalyx::distributed::BatchEvent& event) { return event.kind == "worker-ready"; }
     );
     const auto has_dispatch_event = std::any_of(
         controller_result.events.begin(),
         controller_result.events.end(),
-        [](const zara::distributed::BatchEvent& event) {
+        [](const rothalyx::distributed::BatchEvent& event) {
             return event.kind == "job-dispatched" || event.kind == "job-finished" || event.kind == "worker-detached";
         }
     );
@@ -146,11 +146,11 @@ int main(int argc, char** argv) {
     }
 
     std::string manifest_error;
-    if (!zara::distributed::BatchRunner::write_manifest(output_root / "remote-manifest.tsv", controller_result, manifest_error)) {
+    if (!rothalyx::distributed::BatchRunner::write_manifest(output_root / "remote-manifest.tsv", controller_result, manifest_error)) {
         std::cerr << "remote manifest write failed: " << manifest_error << '\n';
         return 11;
     }
-    if (!zara::distributed::BatchRunner::write_summary(output_root / "remote-summary.json", controller_result, manifest_error)) {
+    if (!rothalyx::distributed::BatchRunner::write_summary(output_root / "remote-summary.json", controller_result, manifest_error)) {
         std::cerr << "remote summary write failed: " << manifest_error << '\n';
         return 12;
     }

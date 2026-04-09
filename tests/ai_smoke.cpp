@@ -5,16 +5,16 @@
 #include <string>
 #include <vector>
 
-#include "zara/ai/assistant.hpp"
+#include "rothalyx/ai/assistant.hpp"
 
 namespace {
 
-zara::disasm::Instruction make_instruction(
+rothalyx::disasm::Instruction make_instruction(
     const std::uint64_t address,
     const std::string& mnemonic,
-    const zara::disasm::InstructionKind kind = zara::disasm::InstructionKind::Instruction
+    const rothalyx::disasm::InstructionKind kind = rothalyx::disasm::InstructionKind::Instruction
 ) {
-    return zara::disasm::Instruction{
+    return rothalyx::disasm::Instruction{
         .address = address,
         .size = 1,
         .kind = kind,
@@ -27,16 +27,16 @@ zara::disasm::Instruction make_instruction(
     };
 }
 
-zara::analysis::DiscoveredFunction make_function(
+rothalyx::analysis::DiscoveredFunction make_function(
     const std::string& name,
     const std::uint64_t entry,
-    std::vector<zara::disasm::Instruction> instructions
+    std::vector<rothalyx::disasm::Instruction> instructions
 ) {
-    return zara::analysis::DiscoveredFunction{
+    return rothalyx::analysis::DiscoveredFunction{
         .name = name,
         .section_name = ".text",
         .entry_address = entry,
-        .graph = zara::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
+        .graph = rothalyx::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
         .lifted_ir = {},
         .ssa_form = {},
         .recovered_types = {},
@@ -49,44 +49,44 @@ zara::analysis::DiscoveredFunction make_function(
 }  // namespace
 
 int main() {
-    zara::analysis::ProgramAnalysis program{
+    rothalyx::analysis::ProgramAnalysis program{
         .functions =
             {
                 make_function(
                     "sub_00001000",
                     0x1000,
                     {
-                        make_instruction(0x1000, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x1001, "ret", zara::disasm::InstructionKind::Return),
+                        make_instruction(0x1000, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x1001, "ret", rothalyx::disasm::InstructionKind::Return),
                     }
                 ),
                 make_function(
                     "sub_00002000",
                     0x2000,
                     {
-                        make_instruction(0x2000, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x2001, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x2002, "ret", zara::disasm::InstructionKind::Return),
+                        make_instruction(0x2000, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x2001, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x2002, "ret", rothalyx::disasm::InstructionKind::Return),
                     }
                 ),
             },
         .call_graph =
             {
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x1000,
                     .call_site = 0x1000,
                     .callee_entry = std::nullopt,
                     .callee_name = "libc.so.6!__libc_start_main",
                     .is_import = true,
                 },
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x2000,
                     .call_site = 0x2000,
                     .callee_entry = std::nullopt,
                     .callee_name = "strlen",
                     .is_import = true,
                 },
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x2000,
                     .call_site = 0x2001,
                     .callee_entry = std::nullopt,
@@ -97,8 +97,8 @@ int main() {
         .strings = {},
         .xrefs =
             {
-                zara::xrefs::CrossReference{
-                    .kind = zara::xrefs::CrossReferenceKind::String,
+                rothalyx::xrefs::CrossReference{
+                    .kind = rothalyx::xrefs::CrossReferenceKind::String,
                     .from_address = 0x2000,
                     .to_address = 0x3000,
                     .label = "password check",
@@ -109,7 +109,7 @@ int main() {
         .internal_state = {},
     };
 
-    const auto insights = zara::ai::Assistant::analyze_program(program, 0x1000);
+    const auto insights = rothalyx::ai::Assistant::analyze_program(program, 0x1000);
     if (insights.size() != 2) {
         std::cerr << "expected 2 insights, got " << insights.size() << '\n';
         return 1;
@@ -118,7 +118,7 @@ int main() {
     const auto entry_it = std::find_if(
         insights.begin(),
         insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x1000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x1000; }
     );
     if (entry_it == insights.end() ||
         entry_it->suggested_name != "entry_startup" ||
@@ -130,7 +130,7 @@ int main() {
     const auto compare_it = std::find_if(
         insights.begin(),
         insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
     );
     if (compare_it == insights.end() ||
         compare_it->suggested_name != "string_compare_helper" ||
@@ -152,7 +152,7 @@ int main() {
     const auto has_pattern = std::any_of(
         compare_it->patterns.begin(),
         compare_it->patterns.end(),
-        [](const zara::ai::PatternDetection& pattern) {
+        [](const rothalyx::ai::PatternDetection& pattern) {
             return pattern.category == "comparison" && pattern.label.find("comparison") != std::string::npos;
         }
     );
@@ -164,7 +164,7 @@ int main() {
     const auto has_vulnerability_hint = std::any_of(
         compare_it->vulnerability_hints.begin(),
         compare_it->vulnerability_hints.end(),
-        [](const zara::ai::VulnerabilityHint& hint) { return hint.title.find("Format-string") != std::string::npos; }
+        [](const rothalyx::ai::VulnerabilityHint& hint) { return hint.title.find("Format-string") != std::string::npos; }
     );
     if (has_vulnerability_hint) {
         std::cerr << "unexpected vulnerability hint for compare helper\n";

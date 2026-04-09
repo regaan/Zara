@@ -1,4 +1,4 @@
-#include "zara/type/recovery.hpp"
+#include "rothalyx/type/recovery.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace zara::type {
+namespace rothalyx::type {
 
 namespace {
 
@@ -638,4 +638,4 @@ std::string render_decl_type_for_prefix(
     return c_decl_type(fallback);
 }
 
-}  // namespace zara::type
+}  // namespace rothalyx::type

@@ -9,15 +9,15 @@ install_prefix="${INSTALL_PREFIX:-/usr}"
 appdir="$artifact_dir/AppDir"
 
 python3 "$repo_root/scripts/release/generate_icons.py" \
-    "$repo_root/apps/desktop_qt/resources/zara-re-platform.png" \
+    "$repo_root/apps/desktop_qt/resources/rothalyx-re-framework.png" \
     "$repo_root/apps/desktop_qt/resources"
 
 cmake -S "$repo_root" -B "$build_dir" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="$install_prefix" \
     -DBUILD_TESTING=OFF \
-    -DZARA_BUILD_CLI=ON \
-    -DZARA_BUILD_DESKTOP_QT=ON
+    -DROTHALYX_BUILD_CLI=ON \
+    -DROTHALYX_BUILD_DESKTOP_QT=ON
 
 cmake --build "$build_dir"
 mkdir -p "$artifact_dir"
@@ -37,19 +37,19 @@ if [[ "$mode" == "appimage" || "$mode" == "all" ]]; then
     find "$artifact_dir" -maxdepth 1 -type f -name '*.AppImage' -delete
     cmake --install "$build_dir" --prefix "$appdir/usr"
     install -Dm0644 \
-        "$repo_root/apps/desktop_qt/resources/zara-re-platform-512.png" \
-        "$appdir/usr/share/icons/hicolor/512x512/apps/zara-re-platform.png"
+        "$repo_root/apps/desktop_qt/resources/rothalyx-re-framework-512.png" \
+        "$appdir/usr/share/icons/hicolor/512x512/apps/rothalyx-re-framework.png"
 
     chmod +x "$LINUXDEPLOY" "$LINUXDEPLOY_PLUGIN_QT" "$APPIMAGETOOL"
     export APPIMAGE_EXTRACT_AND_RUN=1
     export QMAKE="${QMAKE:-qmake6}"
-    export VERSION="${VERSION:-${GITHUB_REF_NAME:-1.0.1}}"
+    export VERSION="${VERSION:-${GITHUB_REF_NAME:-1.0.3}}"
 
     pushd "$artifact_dir" >/dev/null
     "$LINUXDEPLOY" \
         --appdir "$appdir" \
-        --desktop-file "$appdir/usr/share/applications/zara-re-platform.desktop" \
-        --icon-file "$appdir/usr/share/icons/hicolor/512x512/apps/zara-re-platform.png" \
+        --desktop-file "$appdir/usr/share/applications/rothalyx-re-framework.desktop" \
+        --icon-file "$appdir/usr/share/icons/hicolor/512x512/apps/rothalyx-re-framework.png" \
         --plugin qt \
         --output appimage
     popd >/dev/null

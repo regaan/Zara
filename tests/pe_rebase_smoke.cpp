@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 namespace {
 
@@ -98,7 +98,7 @@ std::filesystem::path write_synthetic_rebased_pe() {
     write_value<std::uint16_t>(bytes, 0x60A, 0x0000);
 
     const std::filesystem::path output_path =
-        std::filesystem::temp_directory_path() / "zara_synthetic_rebase.exe";
+        std::filesystem::temp_directory_path() / "rothalyx_synthetic_rebase.exe";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -116,13 +116,13 @@ std::uint32_t read_u32(const std::vector<std::byte>& bytes) {
 int main() {
     const auto binary_path = write_synthetic_rebased_pe();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(
+    if (!rothalyx::loader::BinaryImage::load_from_file(
             binary_path,
             image,
             error,
-            zara::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x500000}
+            rothalyx::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x500000}
         )) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
@@ -136,7 +136,7 @@ int main() {
     const auto data_section = std::find_if(
         image.sections().begin(),
         image.sections().end(),
-        [](const zara::loader::Section& section) { return section.name == ".data"; }
+        [](const rothalyx::loader::Section& section) { return section.name == ".data"; }
     );
     if (data_section == image.sections().end() || data_section->bytes.size() < 4) {
         std::cerr << "failed to locate rebased data section\n";
@@ -152,7 +152,7 @@ int main() {
     const auto rebased_data = std::find_if(
         image.sections().begin(),
         image.sections().end(),
-        [](const zara::loader::Section& section) { return section.name == ".data"; }
+        [](const rothalyx::loader::Section& section) { return section.name == ".data"; }
     );
     if (image.base_address() != 0x600000 || !image.entry_point().has_value() || *image.entry_point() != 0x601000) {
         std::cerr << "unexpected second rebase result\n";

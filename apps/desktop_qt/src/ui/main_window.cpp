@@ -1,10 +1,10 @@
-#include "zara/desktop_qt/ui/main_window.hpp"
+#include "rothalyx/desktop_qt/ui/main_window.hpp"
 
-#include "zara/desktop_qt/app/analysis_runner.hpp"
-#include "zara/desktop_qt/app/ai_settings.hpp"
-#include "zara/desktop_qt/app/secret_store.hpp"
-#include "zara/desktop_qt/app/workspace_controller.hpp"
-#include "zara/desktop_qt/ui/graph_view.hpp"
+#include "rothalyx/desktop_qt/app/analysis_runner.hpp"
+#include "rothalyx/desktop_qt/app/ai_settings.hpp"
+#include "rothalyx/desktop_qt/app/secret_store.hpp"
+#include "rothalyx/desktop_qt/app/workspace_controller.hpp"
+#include "rothalyx/desktop_qt/ui/graph_view.hpp"
 
 #include <QAction>
 #include <QAbstractButton>
@@ -64,7 +64,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace zara::desktop_qt::ui {
+namespace rothalyx::desktop_qt::ui {
 
 namespace {
 
@@ -249,7 +249,7 @@ bool patch_overlaps_breakpoints(
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent),
-      settings_("Zara", "NativeWorkspace") {
+      settings_("Rothalyx", "NativeWorkspace") {
     resize(1720, 1060);
     setDockOptions(QMainWindow::AllowNestedDocks | QMainWindow::AllowTabbedDocks | QMainWindow::AnimatedDocks);
     create_actions();
@@ -479,7 +479,7 @@ void MainWindow::create_layout() {
     startup_left_column->setSpacing(14);
     auto* startup_eyebrow = new QLabel(tr("NATIVE REVERSE ENGINEERING WORKSTATION"), startup_card);
     startup_eyebrow->setObjectName("startupEyebrow");
-    startup_title_label_ = new QLabel(tr("ZARA RE FRAMEWORK"), startup_card);
+    startup_title_label_ = new QLabel(tr("ROTHALYX RE FRAMEWORK"), startup_card);
     startup_title_label_->setObjectName("startupTitle");
     startup_title_label_->setWordWrap(true);
     auto* startup_title_support = new QLabel(
@@ -531,7 +531,7 @@ void MainWindow::create_layout() {
             const QString canonical = QFileInfo(project_path).canonicalFilePath();
             const QString app_data_root =
                 QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).isEmpty()
-                    ? QDir::home().filePath(".zara")
+                    ? QDir::home().filePath(".rothalyx")
                     : QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
             if (!canonical.startsWith(QDir(app_data_root).canonicalPath())) {
                 statusBar()->showMessage("Workspace project path rejected: outside application data directory.", 5000);
@@ -950,12 +950,12 @@ void MainWindow::apply_theme() {
 
 void MainWindow::update_window_title() {
     if (controller_ == nullptr || controller_->workspace() == nullptr) {
-        setWindowTitle("ZARA RE FRAMEWORK");
+        setWindowTitle("ROTHALYX RE FRAMEWORK");
         return;
     }
 
     const auto* workspace = controller_->workspace();
-    QString title = tr("ZARA RE FRAMEWORK  |  %1 / %2")
+    QString title = tr("ROTHALYX RE FRAMEWORK  |  %1 / %2")
                         .arg(to_qstring(workspace->run.binary_format).toUpper(), to_qstring(workspace->run.architecture).toUpper());
     if (!current_binary_path_.empty()) {
         title += tr("  |  %1").arg(QString::fromStdString(current_binary_path_.filename().string()));
@@ -2582,7 +2582,7 @@ QString MainWindow::format_symbol_label(const std::uint64_t address) const {
 std::filesystem::path MainWindow::project_database_path_for_binary(const std::filesystem::path& binary_path) const {
     const QString app_data_root =
         QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).isEmpty()
-            ? QDir::home().filePath(".zara")
+            ? QDir::home().filePath(".rothalyx")
             : QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QDir project_dir(app_data_root);
     project_dir.mkpath("projects");
@@ -2642,7 +2642,7 @@ void MainWindow::open_ai_settings_dialog() {
 
     auto* layout = new QVBoxLayout(&dialog);
     auto* intro = new QLabel(
-        tr("Choose how Zara should perform model-backed analysis. Hosted providers use your own provider account. Local heuristic analysis stays available as a fallback."),
+        tr("Choose how Rothalyx should perform model-backed analysis. Hosted providers use your own provider account. Local heuristic analysis stays available as a fallback."),
         &dialog
     );
     intro->setWordWrap(true);
@@ -2690,7 +2690,7 @@ void MainWindow::open_ai_settings_dialog() {
     auto* storage_note = new QLabel(&dialog);
     storage_note->setWordWrap(true);
     auto* usage_note = new QLabel(
-        tr("Cost model: Zara never proxies your hosted requests here. Your provider bills your key directly. Zara only limits request scope with per-run function caps, timeouts, and an optional daily request cap."),
+        tr("Cost model: Rothalyx never proxies your hosted requests here. Your provider bills your key directly. Rothalyx only limits request scope with per-run function caps, timeouts, and an optional daily request cap."),
         &dialog
     );
     usage_note->setWordWrap(true);
@@ -2818,8 +2818,8 @@ void MainWindow::open_ai_settings_dialog() {
 void MainWindow::show_about_dialog() {
     QMessageBox::about(
         this,
-        tr("About ZARA RE FRAMEWORK"),
-        tr("ZARA RE FRAMEWORK is a native reverse engineering workstation for binary analysis, graph reconstruction, decompilation, debugging, and automation.\n\nIt is developed by Regaan R, a security researcher and the founder of ROT Independent Security Research Lab.")
+        tr("About ROTHALYX RE FRAMEWORK"),
+        tr("ROTHALYX RE FRAMEWORK is a native reverse engineering workstation for binary analysis, graph reconstruction, decompilation, debugging, and automation.\n\nIt is developed by Regaan R, a security researcher and the founder of ROT Independent Security Research Lab.")
     );
 }
 
@@ -3215,11 +3215,11 @@ void MainWindow::rename_selected_symbol() {
     workspace_tabs_->setCurrentWidget(summary_view_);
     if (live_program_.has_value()) {
         (void)live_program_->address_space.add_symbol(
-            zara::memory::Symbol{
+            rothalyx::memory::Symbol{
                 .name = renamed.toStdString(),
                 .address = *function_entry,
                 .size = 0,
-                .kind = zara::memory::SymbolKind::User,
+                .kind = rothalyx::memory::SymbolKind::User,
             }
         );
     }
@@ -3562,14 +3562,14 @@ void MainWindow::import_coverage_trace() {
         return;
     }
 
-    zara::security::CrashTrace trace;
-    if (!zara::security::Workflow::parse_trace_file(std::filesystem::path(trace_path.toStdString()), trace, error)) {
+    rothalyx::security::CrashTrace trace;
+    if (!rothalyx::security::Workflow::parse_trace_file(std::filesystem::path(trace_path.toStdString()), trace, error)) {
         show_error("Coverage Import Failed", tr("Failed to parse the trace file.\n\n%1").arg(to_qstring(error)));
         return;
     }
 
     const auto report =
-        zara::security::Workflow::analyze_fuzzing_surface(current_binary_path_, live_program_->analysis, trace);
+        rothalyx::security::Workflow::analyze_fuzzing_surface(current_binary_path_, live_program_->analysis, trace);
     if (!controller_->save_coverage_report(trace, report, error)) {
         show_error("Coverage Import Failed", tr("Failed to persist coverage.\n\n%1").arg(to_qstring(error)));
         return;
@@ -3899,4 +3899,4 @@ void MainWindow::show_error(const QString& title, const QString& message) {
     QMessageBox::critical(this, title, message);
 }
 
-}  // namespace zara::desktop_qt::ui
+}  // namespace rothalyx::desktop_qt::ui

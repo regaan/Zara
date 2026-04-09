@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 namespace {
 
@@ -106,7 +106,7 @@ std::filesystem::path write_synthetic_pe() {
     write_value<std::uint32_t>(bytes, 0x400 + 28, 0x2050);
     write_value<std::uint32_t>(bytes, 0x400 + 32, 0x2054);
     write_value<std::uint32_t>(bytes, 0x400 + 36, 0x2058);
-    write_ascii(bytes, 0x440, "zarape.dll\0");
+    write_ascii(bytes, 0x440, "rothalyxpe.dll\0");
     write_value<std::uint32_t>(bytes, 0x450, 0x1000);
     write_value<std::uint32_t>(bytes, 0x454, 0x2060);
     write_value<std::uint16_t>(bytes, 0x458, 0);
@@ -124,7 +124,7 @@ std::filesystem::path write_synthetic_pe() {
     write_ascii(bytes, 0x670, "KERNEL32.dll\0");
 
     const std::filesystem::path output_path =
-        std::filesystem::temp_directory_path() / "zara_synthetic_import_export.exe";
+        std::filesystem::temp_directory_path() / "rothalyx_synthetic_import_export.exe";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -137,19 +137,19 @@ std::filesystem::path write_synthetic_pe() {
 int main() {
     const std::filesystem::path binary_path = write_synthetic_pe();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
     }
 
-    if (image.format() != zara::loader::BinaryFormat::PE) {
+    if (image.format() != rothalyx::loader::BinaryFormat::PE) {
         std::cerr << "expected PE format\n";
         return 2;
     }
 
-    if (image.architecture() != zara::loader::Architecture::X86) {
+    if (image.architecture() != rothalyx::loader::Architecture::X86) {
         std::cerr << "expected x86 architecture\n";
         return 3;
     }
@@ -167,7 +167,7 @@ int main() {
     const auto imported = std::find_if(
         image.imports().begin(),
         image.imports().end(),
-        [](const zara::loader::ImportedSymbol& symbol) {
+        [](const rothalyx::loader::ImportedSymbol& symbol) {
             return symbol.library == "KERNEL32.dll" &&
                    symbol.name == "ExitProcess" &&
                    symbol.address == 0x403050;
@@ -181,7 +181,7 @@ int main() {
     const auto exported = std::find_if(
         image.exports().begin(),
         image.exports().end(),
-        [](const zara::loader::ExportedSymbol& symbol) {
+        [](const rothalyx::loader::ExportedSymbol& symbol) {
             return symbol.name == "ExportedFunc" && symbol.address == 0x401000;
         }
     );

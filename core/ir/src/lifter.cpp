@@ -1,4 +1,4 @@
-#include "zara/ir/lifter.hpp"
+#include "rothalyx/ir/lifter.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -9,7 +9,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace zara::ir {
+namespace rothalyx::ir {
 
 namespace {
 
@@ -1024,4 +1024,4 @@ std::string format_instruction(const Instruction& instruction) {
     return stream.str();
 }
 
-}  // namespace zara::ir
+}  // namespace rothalyx::ir

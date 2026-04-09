@@ -1,4 +1,4 @@
-#include "zara/distributed/batch_runner.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -30,17 +30,17 @@
 #include <unistd.h>
 #endif
 
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #endif
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
-namespace zara::distributed {
+namespace rothalyx::distributed {
 
 namespace {
 
@@ -60,7 +60,7 @@ struct WorkerConnection {
     std::string controller_nonce;
     std::chrono::steady_clock::time_point last_activity = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point last_heartbeat = std::chrono::steady_clock::now();
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     SSL* tls = nullptr;
 #endif
 };
@@ -84,7 +84,7 @@ struct WorkerPolicy {
     std::string auth_token;
 };
 
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
 struct TlsContext {
     SSL_CTX* handle = nullptr;
     bool server = false;
@@ -93,7 +93,7 @@ struct TlsContext {
 
 struct TransportConnection {
     int fd = -1;
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     SSL* tls = nullptr;
 #endif
 };
@@ -140,7 +140,7 @@ std::string resolve_shared_secret(std::string configured_secret) {
     if (!configured_secret.empty()) {
         return configured_secret;
     }
-    if (const auto env_secret = environment_string("ZARA_BATCH_SHARED_SECRET"); env_secret.has_value()) {
+    if (const auto env_secret = environment_string("ROTHALYX_BATCH_SHARED_SECRET"); env_secret.has_value()) {
         return *env_secret;
     }
     return {};
@@ -148,35 +148,35 @@ std::string resolve_shared_secret(std::string configured_secret) {
 
 RemoteOptions resolve_remote_options(RemoteOptions options) {
     if (!options.use_tls) {
-        if (const auto env = environment_bool("ZARA_BATCH_USE_TLS"); env.has_value()) {
+        if (const auto env = environment_bool("ROTHALYX_BATCH_USE_TLS"); env.has_value()) {
             options.use_tls = *env;
         }
     }
-    if (const auto env = environment_bool("ZARA_BATCH_TLS_REQUIRE_REMOTE"); env.has_value()) {
+    if (const auto env = environment_bool("ROTHALYX_BATCH_TLS_REQUIRE_REMOTE"); env.has_value()) {
         options.require_tls_for_remote = *env;
     }
     if (!options.tls_insecure_skip_verify) {
-        if (const auto env = environment_bool("ZARA_BATCH_TLS_INSECURE_SKIP_VERIFY"); env.has_value()) {
+        if (const auto env = environment_bool("ROTHALYX_BATCH_TLS_INSECURE_SKIP_VERIFY"); env.has_value()) {
             options.tls_insecure_skip_verify = *env;
         }
     }
     if (options.tls_certificate.empty()) {
-        if (const auto env = environment_string("ZARA_BATCH_TLS_CERT"); env.has_value()) {
+        if (const auto env = environment_string("ROTHALYX_BATCH_TLS_CERT"); env.has_value()) {
             options.tls_certificate = *env;
         }
     }
     if (options.tls_private_key.empty()) {
-        if (const auto env = environment_string("ZARA_BATCH_TLS_KEY"); env.has_value()) {
+        if (const auto env = environment_string("ROTHALYX_BATCH_TLS_KEY"); env.has_value()) {
             options.tls_private_key = *env;
         }
     }
     if (options.tls_ca_certificate.empty()) {
-        if (const auto env = environment_string("ZARA_BATCH_TLS_CA"); env.has_value()) {
+        if (const auto env = environment_string("ROTHALYX_BATCH_TLS_CA"); env.has_value()) {
             options.tls_ca_certificate = *env;
         }
     }
     if (options.heartbeat_timeout_ms == 5000) {
-        if (const auto env = environment_size("ZARA_BATCH_HEARTBEAT_TIMEOUT_MS"); env.has_value()) {
+        if (const auto env = environment_size("ROTHALYX_BATCH_HEARTBEAT_TIMEOUT_MS"); env.has_value()) {
             options.heartbeat_timeout_ms = *env;
         }
     }
@@ -818,7 +818,7 @@ std::string socket_error_message(const std::string_view prefix) {
 }
 
 std::string tls_error_message(const std::string_view prefix) {
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     const unsigned long code = ERR_get_error();
     if (code == 0) {
         return std::string(prefix) + ": unknown TLS error";
@@ -832,7 +832,7 @@ std::string tls_error_message(const std::string_view prefix) {
 #endif
 }
 
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
 void destroy_tls_context(TlsContext& context) {
     if (context.handle != nullptr) {
         SSL_CTX_free(context.handle);
@@ -1051,7 +1051,7 @@ bool attach_client_tls(
 #endif
 
 void close_transport_connection(TransportConnection& connection) {
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     if (connection.tls != nullptr) {
         (void)SSL_shutdown(connection.tls);
         SSL_free(connection.tls);
@@ -1070,7 +1070,7 @@ bool write_line(const TransportConnection& connection, const std::string& line, 
     std::size_t written = 0;
     while (written < line.size()) {
         long result = 0;
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         if (connection.tls != nullptr) {
             result = SSL_write(
                 connection.tls,
@@ -1129,7 +1129,7 @@ bool read_line(
     char character = '\0';
     while (true) {
         long result = 0;
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         if (connection.tls != nullptr) {
             result = SSL_read(connection.tls, &character, 1);
             if (result <= 0) {
@@ -1226,13 +1226,13 @@ int connect_socket(const std::string& host, const std::uint16_t port, std::strin
 void close_connection(WorkerConnection& connection) {
     TransportConnection transport{
         .fd = connection.fd,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         .tls = connection.tls,
 #endif
     };
     close_transport_connection(transport);
     connection.fd = transport.fd;
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     connection.tls = transport.tls;
 #endif
     connection.awaiting_result = false;
@@ -1555,8 +1555,8 @@ bool BatchRunner::analyze_remote(
         return false;
     }
     if (tls_enabled_for_options(remote_options)) {
-#if !defined(ZARA_HAS_OPENSSL)
-        out_error = "Remote controller TLS was requested but Zara was built without OpenSSL support.";
+#if !defined(ROTHALYX_HAS_OPENSSL)
+        out_error = "Remote controller TLS was requested but Rothalyx was built without OpenSSL support.";
         return false;
 #endif
     }
@@ -1577,7 +1577,7 @@ bool BatchRunner::analyze_remote(
         close(listener);
     };
 
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     TlsContext tls_context;
     if (!create_server_tls_context(remote_options, tls_context, out_error)) {
         close_listener();
@@ -1613,7 +1613,7 @@ bool BatchRunner::analyze_remote(
         const int worker_fd = accept(listener, nullptr, nullptr);
         if (worker_fd < 0) {
             out_error = socket_error_message("controller accept failed");
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1622,11 +1622,11 @@ bool BatchRunner::analyze_remote(
 
         TransportConnection transport{
             .fd = worker_fd,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             .tls = nullptr,
 #endif
         };
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         if (!attach_server_tls(tls_context, transport, out_error)) {
             close_transport_connection(transport);
             destroy_tls();
@@ -1646,7 +1646,7 @@ bool BatchRunner::analyze_remote(
             )) {
             out_error = read_error;
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1657,7 +1657,7 @@ bool BatchRunner::analyze_remote(
         if (!decode_hello_message(hello_line, hello)) {
             out_error = "Remote worker handshake is invalid.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1666,7 +1666,7 @@ bool BatchRunner::analyze_remote(
         if (hello.auth_token != build_hello_token(hello, shared_secret)) {
             out_error = "Remote worker authentication failed.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1675,7 +1675,7 @@ bool BatchRunner::analyze_remote(
         if (!seen_worker_nonces.insert(hello.worker_nonce).second) {
             out_error = "Remote worker authentication failed: replayed nonce.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1699,7 +1699,7 @@ bool BatchRunner::analyze_remote(
                 .controller_nonce = {},
                 .last_activity = std::chrono::steady_clock::now(),
                 .last_heartbeat = std::chrono::steady_clock::now(),
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 .tls = transport.tls,
 #endif
             }
@@ -1707,7 +1707,7 @@ bool BatchRunner::analyze_remote(
         if (hello.protocol_version != remote_options.protocol_version) {
             out_error = "Remote worker protocol version does not match the controller policy.";
             close_connection(workers.back());
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1725,7 +1725,7 @@ bool BatchRunner::analyze_remote(
             ) == remote_options.allowed_platforms.end()) {
             out_error = "Remote worker platform is not allowed by the controller policy.";
             close_connection(workers.back());
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1749,7 +1749,7 @@ bool BatchRunner::analyze_remote(
         if (!write_line(
                 TransportConnection{
                     .fd = workers.back().fd,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                     .tls = workers.back().tls,
 #endif
                 },
@@ -1758,7 +1758,7 @@ bool BatchRunner::analyze_remote(
             )) {
             out_error = write_error;
             close_connection(workers.back());
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             close_listener();
@@ -1770,7 +1770,7 @@ bool BatchRunner::analyze_remote(
     auto dispatch_job = [&](WorkerConnection& worker) -> bool {
         TransportConnection transport{
             .fd = worker.fd,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             .tls = worker.tls,
 #endif
         };
@@ -1842,7 +1842,7 @@ bool BatchRunner::analyze_remote(
                 for (auto& connection : workers) {
                     close_connection(connection);
                 }
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 close_listener();
@@ -1900,7 +1900,7 @@ bool BatchRunner::analyze_remote(
             WorkerConnection& worker = workers[indices[descriptor_index]];
             TransportConnection transport{
                 .fd = worker.fd,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 .tls = worker.tls,
 #endif
             };
@@ -1917,7 +1917,7 @@ bool BatchRunner::analyze_remote(
                 for (auto& connection : workers) {
                     close_connection(connection);
                 }
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 close_listener();
@@ -1944,7 +1944,7 @@ bool BatchRunner::analyze_remote(
                 for (auto& connection : workers) {
                     close_connection(connection);
                 }
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 close_listener();
@@ -1955,7 +1955,7 @@ bool BatchRunner::analyze_remote(
                 for (auto& connection : workers) {
                     close_connection(connection);
                 }
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 close_listener();
@@ -2003,7 +2003,7 @@ bool BatchRunner::analyze_remote(
         );
         close_connection(worker);
     }
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     destroy_tls();
 #endif
     close_listener();
@@ -2036,8 +2036,8 @@ bool BatchRunner::run_remote_worker(
         return false;
     }
     if (tls_enabled_for_options(remote_options)) {
-#if !defined(ZARA_HAS_OPENSSL)
-        out_error = "Remote worker TLS was requested but Zara was built without OpenSSL support.";
+#if !defined(ROTHALYX_HAS_OPENSSL)
+        out_error = "Remote worker TLS was requested but Rothalyx was built without OpenSSL support.";
         return false;
 #endif
     }
@@ -2052,12 +2052,12 @@ bool BatchRunner::run_remote_worker(
     }
     TransportConnection transport{
         .fd = connection,
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         .tls = nullptr,
 #endif
     };
 
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
     TlsContext tls_context;
     if (!create_client_tls_context(remote_options, tls_context, out_error)) {
         close_transport_connection(transport);
@@ -2081,7 +2081,7 @@ bool BatchRunner::run_remote_worker(
         .host = hostname_buffer,
         .platform = current_platform_name(),
         .worker_id = current_platform_name() + "-" + std::to_string(static_cast<unsigned long long>(::getpid())),
-        .protocol_version = remote_options.protocol_version.empty() ? "zara-batch/2" : remote_options.protocol_version,
+        .protocol_version = remote_options.protocol_version.empty() ? "rothalyx-batch/2" : remote_options.protocol_version,
         .worker_nonce = random_nonce(),
         .auth_token = {},
     };
@@ -2089,7 +2089,7 @@ bool BatchRunner::run_remote_worker(
     authenticated_hello.auth_token = build_hello_token(authenticated_hello, shared_secret);
     if (!write_line(transport, encode_hello_message(authenticated_hello), out_error)) {
         close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         destroy_tls();
 #endif
         return false;
@@ -2100,7 +2100,7 @@ bool BatchRunner::run_remote_worker(
         std::string policy_line;
         if (!read_line(transport, 30000, 64u * 1024u, policy_line, out_error)) {
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2108,7 +2108,7 @@ bool BatchRunner::run_remote_worker(
         if (!decode_policy_message(policy_line, policy)) {
             out_error = "Remote controller sent an invalid policy message.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2116,7 +2116,7 @@ bool BatchRunner::run_remote_worker(
         if (policy.protocol_version != authenticated_hello.protocol_version) {
             out_error = "Remote controller protocol version does not match the worker implementation.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2124,7 +2124,7 @@ bool BatchRunner::run_remote_worker(
         if (policy.auth_token != build_policy_token(policy, authenticated_hello.worker_nonce, shared_secret)) {
             out_error = "Remote controller authentication failed.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2134,7 +2134,7 @@ bool BatchRunner::run_remote_worker(
     std::size_t completed_jobs = 0;
     if (!write_line(transport, encode_event_message("worker-ready", "worker connected"), out_error)) {
         close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
         destroy_tls();
 #endif
         return false;
@@ -2150,7 +2150,7 @@ bool BatchRunner::run_remote_worker(
                 out_error
             )) {
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2158,7 +2158,7 @@ bool BatchRunner::run_remote_worker(
 
         if (line == "DONE") {
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return true;
@@ -2168,7 +2168,7 @@ bool BatchRunner::run_remote_worker(
         if (!decode_job_message(line, binary_path)) {
             out_error = "Remote controller sent an invalid job message.";
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2176,7 +2176,7 @@ bool BatchRunner::run_remote_worker(
 
         if (!write_line(transport, encode_event_message("job-started", binary_path.filename().string()), out_error)) {
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2214,7 +2214,7 @@ bool BatchRunner::run_remote_worker(
         if (heartbeat_failed.load()) {
             out_error = heartbeat_error.empty() ? "Remote worker heartbeat failed." : heartbeat_error;
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2225,7 +2225,7 @@ bool BatchRunner::run_remote_worker(
             std::lock_guard lock(write_mutex);
             if (!write_line(transport, encode_result_message(result, policy.controller_nonce, shared_secret), out_error)) {
                 close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 return false;
@@ -2235,7 +2235,7 @@ bool BatchRunner::run_remote_worker(
             binary_path.filename().string() + (result.success ? " ok" : " error");
         if (!write_line(transport, encode_event_message("job-finished", result_detail), out_error)) {
             close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
             destroy_tls();
 #endif
             return false;
@@ -2243,7 +2243,7 @@ bool BatchRunner::run_remote_worker(
         if (policy.max_jobs_per_worker > 0 && completed_jobs >= policy.max_jobs_per_worker) {
             if (!write_line(transport, encode_event_message("worker-quota", "worker reached max_jobs_per_worker"), out_error)) {
                 close_transport_connection(transport);
-#if defined(ZARA_HAS_OPENSSL)
+#if defined(ROTHALYX_HAS_OPENSSL)
                 destroy_tls();
 #endif
                 return false;
@@ -2258,4 +2258,4 @@ bool BatchRunner::run_remote_worker(
 #endif
 }
 
-}  // namespace zara::distributed
+}  // namespace rothalyx::distributed

@@ -5,20 +5,20 @@
 #include <string>
 #include <vector>
 
-#include "zara/debugger/session.hpp"
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/debugger/session.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_debugger_launch_smoke <debuggee>\n";
+        std::cerr << "usage: rothalyx_debugger_launch_smoke <debuggee>\n";
         return 1;
     }
 
     const std::filesystem::path debuggee_path(argv[1]);
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(debuggee_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(debuggee_path, image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 2;
     }
@@ -28,20 +28,20 @@ int main(int argc, char** argv) {
         return 3;
     }
 
-    const auto debugger = zara::debugger::DebugSession::create_native();
+    const auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         std::cerr << "debugger backend is unavailable\n";
         return 4;
     }
 
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->launch(debuggee_path, {}, event, error)) {
         std::cerr << "launch failed: " << error << '\n';
         return 5;
     }
 
-    if (event.reason != zara::debugger::StopReason::Launch) {
-        std::cerr << "expected launch stop, got " << zara::debugger::to_string(event.reason) << '\n';
+    if (event.reason != rothalyx::debugger::StopReason::Launch) {
+        std::cerr << "expected launch stop, got " << rothalyx::debugger::to_string(event.reason) << '\n';
         return 6;
     }
 
@@ -55,14 +55,14 @@ int main(int argc, char** argv) {
         return 8;
     }
 
-    if (event.reason != zara::debugger::StopReason::Breakpoint ||
+    if (event.reason != rothalyx::debugger::StopReason::Breakpoint ||
         !event.address.has_value() ||
         *event.address != *image.entry_point()) {
         std::cerr << "expected breakpoint at entry point\n";
         return 9;
     }
 
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (!debugger->read_registers(registers, error)) {
         std::cerr << "read_registers failed: " << error << '\n';
         return 10;
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
         return 14;
     }
 
-    if (event.reason != zara::debugger::StopReason::SingleStep) {
-        std::cerr << "expected single-step stop, got " << zara::debugger::to_string(event.reason) << '\n';
+    if (event.reason != rothalyx::debugger::StopReason::SingleStep) {
+        std::cerr << "expected single-step stop, got " << rothalyx::debugger::to_string(event.reason) << '\n';
         return 15;
     }
 
@@ -115,16 +115,16 @@ int main(int argc, char** argv) {
             return 19;
         }
 
-        if (event.reason == zara::debugger::StopReason::Exited) {
+        if (event.reason == rothalyx::debugger::StopReason::Exited) {
             break;
         }
 
-        if (event.reason == zara::debugger::StopReason::Signal ||
-            event.reason == zara::debugger::StopReason::SingleStep) {
+        if (event.reason == rothalyx::debugger::StopReason::Signal ||
+            event.reason == rothalyx::debugger::StopReason::SingleStep) {
             continue;
         }
 
-        std::cerr << "unexpected terminal stop: " << zara::debugger::to_string(event.reason) << '\n';
+        std::cerr << "unexpected terminal stop: " << rothalyx::debugger::to_string(event.reason) << '\n';
         return 20;
     }
 

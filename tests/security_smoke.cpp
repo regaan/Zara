@@ -8,17 +8,17 @@
 #include <string>
 #include <vector>
 
-#include "zara/security/workflow.hpp"
+#include "rothalyx/security/workflow.hpp"
 
 namespace {
 
-zara::disasm::Instruction make_instruction(
+rothalyx::disasm::Instruction make_instruction(
     const std::uint64_t address,
     const std::string& mnemonic,
     const std::string& operands = {},
-    const zara::disasm::InstructionKind kind = zara::disasm::InstructionKind::Instruction
+    const rothalyx::disasm::InstructionKind kind = rothalyx::disasm::InstructionKind::Instruction
 ) {
-    return zara::disasm::Instruction{
+    return rothalyx::disasm::Instruction{
         .address = address,
         .size = 1,
         .kind = kind,
@@ -31,17 +31,17 @@ zara::disasm::Instruction make_instruction(
     };
 }
 
-zara::analysis::DiscoveredFunction make_function(
+rothalyx::analysis::DiscoveredFunction make_function(
     const std::string& name,
     const std::uint64_t entry,
-    std::vector<zara::disasm::Instruction> instructions,
-    zara::analysis::FunctionAnalysisSummary summary = {}
+    std::vector<rothalyx::disasm::Instruction> instructions,
+    rothalyx::analysis::FunctionAnalysisSummary summary = {}
 ) {
-    return zara::analysis::DiscoveredFunction{
+    return rothalyx::analysis::DiscoveredFunction{
         .name = name,
         .section_name = ".text",
         .entry_address = entry,
-        .graph = zara::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
+        .graph = rothalyx::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
         .lifted_ir = {},
         .ssa_form = {},
         .recovered_types = {},
@@ -54,7 +54,7 @@ zara::analysis::DiscoveredFunction make_function(
 }  // namespace
 
 int main() {
-    zara::analysis::ProgramAnalysis program{
+    rothalyx::analysis::ProgramAnalysis program{
         .functions =
             {
                 make_function(
@@ -62,9 +62,9 @@ int main() {
                     0x1000,
                     {
                         make_instruction(0x1000, "pop", "rdi"),
-                        make_instruction(0x1001, "ret", {}, zara::disasm::InstructionKind::Return),
+                        make_instruction(0x1001, "ret", {}, rothalyx::disasm::InstructionKind::Return),
                     },
-                    zara::analysis::FunctionAnalysisSummary{
+                    rothalyx::analysis::FunctionAnalysisSummary{
                         .constants = {},
                         .unreachable_blocks_removed = 0,
                         .copy_propagations_applied = 0,
@@ -75,11 +75,11 @@ int main() {
                         .uses_frame_pointer = true,
                         .locals =
                             {
-                                zara::analysis::LocalVariable{
+                                rothalyx::analysis::LocalVariable{
                                     .name = "buf_20",
                                     .stack_offset = -0x20,
                                     .size = 32,
-                                    .type = zara::ir::ScalarType::Unknown,
+                                    .type = rothalyx::ir::ScalarType::Unknown,
                                 },
                             },
                     }
@@ -89,20 +89,20 @@ int main() {
                     0x1100,
                     {
                         make_instruction(0x1100, "nop"),
-                        make_instruction(0x1101, "ret", {}, zara::disasm::InstructionKind::Return),
+                        make_instruction(0x1101, "ret", {}, rothalyx::disasm::InstructionKind::Return),
                     }
                 ),
             },
         .call_graph =
             {
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x1000,
                     .call_site = 0x1000,
                     .callee_entry = std::nullopt,
                     .callee_name = "gets",
                     .is_import = true,
                 },
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x1100,
                     .call_site = 0x1100,
                     .callee_entry = std::nullopt,
@@ -113,8 +113,8 @@ int main() {
         .strings = {},
         .xrefs =
             {
-                zara::xrefs::CrossReference{
-                    .kind = zara::xrefs::CrossReferenceKind::String,
+                rothalyx::xrefs::CrossReference{
+                    .kind = rothalyx::xrefs::CrossReferenceKind::String,
                     .from_address = 0x1100,
                     .to_address = 0x3000,
                     .label = "/bin/sh -c whoami",
@@ -125,37 +125,37 @@ int main() {
         .internal_state = {},
     };
 
-    const auto exploit_report = zara::security::Workflow::analyze_exploit_surface("fixture.bin", program);
+    const auto exploit_report = rothalyx::security::Workflow::analyze_exploit_surface("fixture.bin", program);
     const auto has_unsafe_call = std::any_of(
         exploit_report.findings.begin(),
         exploit_report.findings.end(),
-        [](const zara::security::RiskFinding& finding) {
+        [](const rothalyx::security::RiskFinding& finding) {
             return finding.title == "Unsafe C library call" && finding.function_entry == 0x1000;
         }
     );
     const auto has_command_exec = std::any_of(
         exploit_report.findings.begin(),
         exploit_report.findings.end(),
-        [](const zara::security::RiskFinding& finding) {
+        [](const rothalyx::security::RiskFinding& finding) {
             return finding.title == "Command execution primitive" && finding.function_entry == 0x1100;
         }
     );
     const auto has_pop_rdi = std::any_of(
         exploit_report.gadgets.begin(),
         exploit_report.gadgets.end(),
-        [](const zara::security::Gadget& gadget) { return gadget.sequence == "pop rdi ; ret"; }
+        [](const rothalyx::security::Gadget& gadget) { return gadget.sequence == "pop rdi ; ret"; }
     );
     const auto has_overflow_pattern = std::any_of(
         exploit_report.patterns.begin(),
         exploit_report.patterns.end(),
-        [](const zara::security::VulnerabilityPattern& pattern) {
+        [](const rothalyx::security::VulnerabilityPattern& pattern) {
             return pattern.category == "stack_overflow_surface" && pattern.function_entry == 0x1000;
         }
     );
     const auto has_command_target = std::any_of(
         exploit_report.poc_targets.begin(),
         exploit_report.poc_targets.end(),
-        [](const zara::security::PocScaffoldTarget& target) {
+        [](const rothalyx::security::PocScaffoldTarget& target) {
             return target.role == "command_buffer" && target.function_entry == 0x1100;
         }
     );
@@ -177,7 +177,7 @@ int main() {
     }
 
     const auto trace_path =
-        std::filesystem::temp_directory_path() / "zara_security_trace_smoke.txt";
+        std::filesystem::temp_directory_path() / "rothalyx_security_trace_smoke.txt";
     {
         std::ofstream trace(trace_path);
         trace << "input=seed-1\n";
@@ -187,14 +187,14 @@ int main() {
         trace << "0x1100\n";
     }
 
-    zara::security::CrashTrace trace;
+    rothalyx::security::CrashTrace trace;
     std::string error;
-    if (!zara::security::Workflow::parse_trace_file(trace_path, trace, error)) {
+    if (!rothalyx::security::Workflow::parse_trace_file(trace_path, trace, error)) {
         std::cerr << "trace parse failed: " << error << '\n';
         return 3;
     }
 
-    const auto fuzz_report = zara::security::Workflow::analyze_fuzzing_surface("fixture.bin", program, trace);
+    const auto fuzz_report = rothalyx::security::Workflow::analyze_fuzzing_surface("fixture.bin", program, trace);
     if (fuzz_report.crash_summary.find("sub_00001000") == std::string::npos) {
         std::cerr << "unexpected crash summary: " << fuzz_report.crash_summary << '\n';
         return 4;
@@ -226,11 +226,11 @@ int main() {
         return 9;
     }
 
-    const auto bundle_root = std::filesystem::temp_directory_path() / "zara_security_bundle_smoke";
+    const auto bundle_root = std::filesystem::temp_directory_path() / "rothalyx_security_bundle_smoke";
     std::error_code remove_error;
     std::filesystem::remove_all(bundle_root, remove_error);
     std::vector<std::filesystem::path> written_paths;
-    if (!zara::security::Workflow::write_harness_bundle(bundle_root, fuzz_report, &written_paths, error)) {
+    if (!rothalyx::security::Workflow::write_harness_bundle(bundle_root, fuzz_report, &written_paths, error)) {
         std::cerr << "failed to write harness bundle: " << error << '\n';
         return 10;
     }
@@ -242,15 +242,15 @@ int main() {
     }
 
     const auto oversized_trace_path =
-        std::filesystem::temp_directory_path() / "zara_security_trace_oversized.txt";
+        std::filesystem::temp_directory_path() / "rothalyx_security_trace_oversized.txt";
     {
         std::ofstream trace(oversized_trace_path);
         trace << "input=" << std::string(5000, 'A') << '\n';
     }
 
-    zara::security::CrashTrace rejected_trace;
+    rothalyx::security::CrashTrace rejected_trace;
     error.clear();
-    if (zara::security::Workflow::parse_trace_file(oversized_trace_path, rejected_trace, error)) {
+    if (rothalyx::security::Workflow::parse_trace_file(oversized_trace_path, rejected_trace, error)) {
         std::cerr << "expected oversized trace metadata to be rejected\n";
         return 12;
     }

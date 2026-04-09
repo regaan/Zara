@@ -1,4 +1,4 @@
-#include "zara/desktop_qt/ui/graph_view.hpp"
+#include "rothalyx/desktop_qt/ui/graph_view.hpp"
 
 #include <QBrush>
 #include <QGraphicsItem>
@@ -16,7 +16,7 @@
 #include <map>
 #include <tuple>
 
-namespace zara::desktop_qt::ui {
+namespace rothalyx::desktop_qt::ui {
 
 GraphView::GraphView(QString placeholder, QWidget* parent)
     : QGraphicsView(parent),
@@ -285,4 +285,4 @@ void GraphView::nudge_initial_zoom(const QRectF& bounds) {
     }
 }
 
-}  // namespace zara::desktop_qt::ui
+}  // namespace rothalyx::desktop_qt::ui

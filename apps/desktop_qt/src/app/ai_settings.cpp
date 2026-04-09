@@ -1,10 +1,10 @@
-#include "zara/desktop_qt/app/ai_settings.hpp"
+#include "rothalyx/desktop_qt/app/ai_settings.hpp"
 
 #include <algorithm>
 
 #include <QDate>
 
-namespace zara::desktop_qt::app {
+namespace rothalyx::desktop_qt::app {
 
 namespace {
 
@@ -118,7 +118,7 @@ QString provider_help_text(const AiProviderProfile provider) {
         return "Uses a local OpenAI-compatible endpoint such as Ollama or LM Studio. No hosted billing required.";
     case AiProviderProfile::Heuristic:
     default:
-        return "Keeps Zara on local heuristic analysis only. No external model requests are made.";
+        return "Keeps Rothalyx on local heuristic analysis only. No external model requests are made.";
     }
 }
 
@@ -285,4 +285,4 @@ void record_ai_request_usage(QSettings& settings, const AiSettings& config) {
     settings.setValue(kAiUsageDayCountKey, day_count + 1);
 }
 
-}  // namespace zara::desktop_qt::app
+}  // namespace rothalyx::desktop_qt::app

@@ -1,6 +1,6 @@
-#include "zara/scripting/python_engine.hpp"
+#include "rothalyx/scripting/python_engine.hpp"
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
 #include <Python.h>
 #endif
 
@@ -19,20 +19,20 @@
 #include <utility>
 #include <vector>
 
-#include "zara/ai/assistant.hpp"
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/debugger/session.hpp"
-#include "zara/diff/engine.hpp"
-#include "zara/distributed/batch_runner.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/security/workflow.hpp"
+#include "rothalyx/ai/assistant.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/debugger/session.hpp"
+#include "rothalyx/diff/engine.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/security/workflow.hpp"
 
-namespace zara::scripting {
+namespace rothalyx::scripting {
 
 namespace {
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
 struct CachedAnalysis {
     loader::BinaryImage image;
     analysis::ProgramAnalysis program;
@@ -667,7 +667,7 @@ PyObject* build_function_detail_dict(const CachedAnalysis& bundle, const analysi
             return nullptr;
         }
 
-        if (!set_dict_item(xref_item, "kind", PyUnicode_FromString(zara::xrefs::to_string(xref.kind).data())) ||
+        if (!set_dict_item(xref_item, "kind", PyUnicode_FromString(rothalyx::xrefs::to_string(xref.kind).data())) ||
             !set_dict_item(xref_item, "from", PyLong_FromUnsignedLongLong(xref.from_address)) ||
             !set_dict_item(xref_item, "to", PyLong_FromUnsignedLongLong(xref.to_address)) ||
             !set_dict_item(xref_item, "label", PyUnicode_FromString(xref.label.c_str())) ||
@@ -2181,7 +2181,7 @@ PyObject* py_clear_cache(PyObject*, PyObject*) {
     Py_RETURN_NONE;
 }
 
-PyMethodDef zara_methods[] = {
+PyMethodDef rothalyx_methods[] = {
     {"analyze_binary", py_analyze_binary, METH_VARARGS, "Analyze a binary and return a summary dictionary."},
     {"list_functions", reinterpret_cast<PyCFunction>(py_list_functions), METH_VARARGS | METH_KEYWORDS, "List discovered functions."},
     {"get_function", reinterpret_cast<PyCFunction>(py_get_function), METH_VARARGS | METH_KEYWORDS, "Return detailed function information."},
@@ -2206,31 +2206,31 @@ PyMethodDef zara_methods[] = {
     {nullptr, nullptr, 0, nullptr},
 };
 
-PyModuleDef zara_module = {
+PyModuleDef rothalyx_module = {
     PyModuleDef_HEAD_INIT,
-    "zara",
-    "Zara embedded reverse-engineering API.",
+    "rothalyx",
+    "Rothalyx embedded reverse-engineering API.",
     -1,
-    zara_methods,
+    rothalyx_methods,
     nullptr,
     nullptr,
     nullptr,
     nullptr,
 };
 
-PyObject* PyInit_zara() {
-    return PyModule_Create(&zara_module);
+PyObject* PyInit_rothalyx() {
+    return PyModule_Create(&rothalyx_module);
 }
 #endif
 
 }  // namespace
 
 PythonEngine::PythonEngine() {
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     std::scoped_lock lock(python_runtime_mutex());
     if (python_runtime_refcount() == 0) {
         if (!Py_IsInitialized()) {
-            PyImport_AppendInittab("zara", &PyInit_zara);
+            PyImport_AppendInittab("rothalyx", &PyInit_rothalyx);
             Py_Initialize();
             initialized_here_ = true;
         }
@@ -2243,7 +2243,7 @@ PythonEngine::PythonEngine() {
 }
 
 PythonEngine::~PythonEngine() {
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     std::scoped_lock lock(python_runtime_mutex());
     if (python_runtime_refcount() > 0) {
         --python_runtime_refcount();
@@ -2261,7 +2261,7 @@ bool PythonEngine::is_available() const noexcept {
 bool PythonEngine::set_argv(const std::vector<std::string>& arguments, std::string& out_error) {
     out_error.clear();
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     if (!available_) {
         out_error = "Embedded Python is unavailable.";
         return false;
@@ -2313,7 +2313,7 @@ bool PythonEngine::set_argv(const std::vector<std::string>& arguments, std::stri
 bool PythonEngine::execute_string(const std::string& source, std::string& out_error) {
     out_error.clear();
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     if (!available_) {
         out_error = "Embedded Python is unavailable.";
         return false;
@@ -2336,7 +2336,7 @@ bool PythonEngine::execute_string(const std::string& source, std::string& out_er
 bool PythonEngine::execute_file(const std::filesystem::path& path, std::string& out_error) {
     out_error.clear();
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     if (!available_) {
         out_error = "Embedded Python is unavailable.";
         return false;
@@ -2366,7 +2366,7 @@ bool PythonEngine::execute_file(const std::filesystem::path& path, std::string& 
 bool PythonEngine::run_repl(std::string& out_error) {
     out_error.clear();
 
-#if defined(ZARA_HAS_PYTHON)
+#if defined(ROTHALYX_HAS_PYTHON)
     if (!available_) {
         out_error = "Embedded Python is unavailable.";
         return false;
@@ -2385,7 +2385,7 @@ bool PythonEngine::run_repl(std::string& out_error) {
     // It runs arbitrary code in-process with full permissions.
     std::fprintf(stderr,
         "╔══════════════════════════════════════════════════════════════╗\n"
-        "║  ZARA SCRIPTING REPL — SECURITY NOTICE                     ║\n"
+        "║  ROTHALYX SCRIPTING REPL — SECURITY NOTICE                     ║\n"
         "║                                                            ║\n"
         "║  This REPL executes code with FULL process privileges.     ║\n"
         "║  Unlike plugins, there is NO sandbox or resource limit.    ║\n"
@@ -2393,7 +2393,7 @@ bool PythonEngine::run_repl(std::string& out_error) {
         "╚══════════════════════════════════════════════════════════════╝\n"
     );
 
-    if (PyRun_InteractiveLoop(stdin, "<zara-repl>") != 0) {
+    if (PyRun_InteractiveLoop(stdin, "<rothalyx-repl>") != 0) {
         out_error = fetch_python_error();
         return false;
     }
@@ -2404,4 +2404,4 @@ bool PythonEngine::run_repl(std::string& out_error) {
 #endif
 }
 
-}  // namespace zara::scripting
+}  // namespace rothalyx::scripting

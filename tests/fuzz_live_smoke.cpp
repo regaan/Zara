@@ -3,10 +3,10 @@
 #include <fstream>
 #include <iostream>
 
-#include "zara/security/workflow.hpp"
+#include "rothalyx/security/workflow.hpp"
 
 int main() {
-    const auto temp_root = std::filesystem::temp_directory_path() / "zara_fuzz_live_smoke";
+    const auto temp_root = std::filesystem::temp_directory_path() / "rothalyx_fuzz_live_smoke";
     std::error_code remove_error;
     std::filesystem::remove_all(temp_root, remove_error);
     std::filesystem::create_directories(temp_root);
@@ -28,16 +28,16 @@ int main() {
     );
 
     std::size_t callback_count = 0;
-    zara::security::LiveFuzzResult result;
+    rothalyx::security::LiveFuzzResult result;
     std::string error;
-    if (!zara::security::Workflow::run_live_fuzz_tool(
+    if (!rothalyx::security::Workflow::run_live_fuzz_tool(
             script_path.string(),
-            zara::security::LiveFuzzOptions{
+            rothalyx::security::LiveFuzzOptions{
                 .working_directory = temp_root,
                 .engine_hint = "afl libfuzzer",
                 .max_output_lines = 32,
                 .max_line_bytes = 4096,
-                .on_event = [&](const zara::security::FuzzProgressEvent&) { ++callback_count; },
+                .on_event = [&](const rothalyx::security::FuzzProgressEvent&) { ++callback_count; },
             },
             result,
             error
@@ -58,14 +58,14 @@ int main() {
     const auto has_libfuzzer = std::any_of(
         result.events.begin(),
         result.events.end(),
-        [](const zara::security::FuzzProgressEvent& event) {
+        [](const rothalyx::security::FuzzProgressEvent& event) {
             return event.kind == "libfuzzer-progress" && event.coverage.has_value() && *event.coverage == 8;
         }
     );
     const auto has_afl = std::any_of(
         result.events.begin(),
         result.events.end(),
-        [](const zara::security::FuzzProgressEvent& event) {
+        [](const rothalyx::security::FuzzProgressEvent& event) {
             return event.kind == "afl-progress" && event.executions.has_value() && *event.executions == 42;
         }
     );

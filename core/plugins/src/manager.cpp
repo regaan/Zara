@@ -1,4 +1,4 @@
-#include "zara/plugins/manager.hpp"
+#include "rothalyx/plugins/manager.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -20,13 +20,13 @@
 #include <unistd.h>
 #endif
 
-#include "zara/ai/assistant.hpp"
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/security/workflow.hpp"
+#include "rothalyx/ai/assistant.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/security/workflow.hpp"
 
-namespace zara::plugins {
+namespace rothalyx::plugins {
 
 namespace {
 
@@ -74,7 +74,7 @@ std::optional<std::string> validate_sandbox_imports(const std::vector<std::strin
 }
 
 bool production_allows_unsandboxed_plugins() {
-    return environment_truthy("ZARA_ENABLE_UNSANDBOXED_PLUGINS");
+    return environment_truthy("ROTHALYX_ENABLE_UNSANDBOXED_PLUGINS");
 }
 
 struct HookPayloadBundle {
@@ -646,14 +646,14 @@ bool sandbox_supported() noexcept {
 }
 
 std::filesystem::path plugin_host_script_path() {
-#if defined(ZARA_PLUGIN_HOST_SCRIPT_SOURCE)
-    const auto source_path = std::filesystem::path(ZARA_PLUGIN_HOST_SCRIPT_SOURCE);
+#if defined(ROTHALYX_PLUGIN_HOST_SCRIPT_SOURCE)
+    const auto source_path = std::filesystem::path(ROTHALYX_PLUGIN_HOST_SCRIPT_SOURCE);
     if (std::filesystem::exists(source_path)) {
         return source_path;
     }
 #endif
-#if defined(ZARA_PLUGIN_HOST_SCRIPT_INSTALL)
-    const auto install_path = std::filesystem::path(ZARA_PLUGIN_HOST_SCRIPT_INSTALL);
+#if defined(ROTHALYX_PLUGIN_HOST_SCRIPT_INSTALL)
+    const auto install_path = std::filesystem::path(ROTHALYX_PLUGIN_HOST_SCRIPT_INSTALL);
     if (std::filesystem::exists(install_path)) {
         return install_path;
     }
@@ -814,7 +814,7 @@ bool PluginManager::discover(
                 .version = version,
                 .api_version = api_version,
                 .description = description,
-                .module_name = "zara_plugin_" + sanitize_module_name(root_path.filename().string()),
+                .module_name = "rothalyx_plugin_" + sanitize_module_name(root_path.filename().string()),
                 .root_path = root_path,
                 .entry_script = entry_script,
                 .capabilities = std::move(capabilities),
@@ -1082,7 +1082,7 @@ bool PluginManager::load_all(const std::filesystem::path& plugins_directory, std
         if (!plugin.sandboxed && !production_allows_unsandboxed_plugins()) {
             out_error =
                 "Non-sandboxed plugin " + plugin.name +
-                " is disabled by default. Set ZARA_ENABLE_UNSANDBOXED_PLUGINS=1 only in trusted developer environments.";
+                " is disabled by default. Set ROTHALYX_ENABLE_UNSANDBOXED_PLUGINS=1 only in trusted developer environments.";
             stop_all_sandboxes();
             loaded_plugins_.clear();
             return false;
@@ -1322,4 +1322,4 @@ const std::vector<PluginDescriptor>& PluginManager::loaded_plugins() const noexc
     return loaded_plugins_;
 }
 
-}  // namespace zara::plugins
+}  // namespace rothalyx::plugins

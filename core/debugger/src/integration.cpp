@@ -1,4 +1,4 @@
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-namespace zara::debugger {
+namespace rothalyx::debugger {
 
 namespace {
 
@@ -87,4 +87,4 @@ bool capture_runtime_snapshot(
     return true;
 }
 
-}  // namespace zara::debugger
+}  // namespace rothalyx::debugger

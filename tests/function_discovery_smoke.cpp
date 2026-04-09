@@ -4,9 +4,9 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 int main() {
     const std::vector<std::byte> text_bytes{
@@ -30,14 +30,14 @@ int main() {
         std::byte{0xC3},
     };
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "synthetic-discovery.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         0x1000,
         0x1000,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = 0x1000,
                 .file_offset = 0,
@@ -49,13 +49,13 @@ int main() {
         }
     );
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map synthetic image\n";
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.size() != 3) {
         std::cerr << "expected three validated functions, got " << analysis.functions.size() << '\n';
         return 2;
@@ -66,7 +66,7 @@ int main() {
         const auto it = std::find_if(
             analysis.functions.begin(),
             analysis.functions.end(),
-            [&](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == entry; }
+            [&](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == entry; }
         );
         if (it == analysis.functions.end()) {
             std::cerr << "missing expected function entry 0x" << std::hex << entry << std::dec << '\n';
@@ -77,7 +77,7 @@ int main() {
     const auto false_positive = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1004; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1004; }
     );
     if (false_positive != analysis.functions.end()) {
         std::cerr << "heuristic boundary validation should reject overlapping false positive\n";
@@ -87,7 +87,7 @@ int main() {
     const auto call_edge = std::find_if(
         analysis.call_graph.begin(),
         analysis.call_graph.end(),
-        [](const zara::analysis::CallGraphEdge& edge) {
+        [](const rothalyx::analysis::CallGraphEdge& edge) {
             return edge.caller_entry == 0x1000 && edge.callee_entry.has_value() && *edge.callee_entry == 0x1010;
         }
     );

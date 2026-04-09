@@ -1,16 +1,16 @@
-#include "zara/desktop_qt/ui/main_window.hpp"
+#include "rothalyx/desktop_qt/ui/main_window.hpp"
 
 #include <QApplication>
 #include <QIcon>
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-    app.setApplicationName("ZARA RE FRAMEWORK");
-    app.setOrganizationName("Zara");
+    app.setApplicationName("ROTHALYX RE FRAMEWORK");
+    app.setOrganizationName("Rothalyx");
     app.setStyle("Fusion");
-    app.setWindowIcon(QIcon(":/zara-re-platform.png"));
+    app.setWindowIcon(QIcon(":/rothalyx-re-framework.png"));
 
-    zara::desktop_qt::ui::MainWindow window;
+    rothalyx::desktop_qt::ui::MainWindow window;
     window.setWindowIcon(app.windowIcon());
     window.show();
 

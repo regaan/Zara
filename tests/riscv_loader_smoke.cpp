@@ -9,10 +9,10 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/disasm/disassembler.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -98,7 +98,7 @@ std::filesystem::path write_synthetic_riscv_elf() {
     write_value<std::uint64_t>(bytes, kShstrtabSectionOffset + 0x30, 1);
 
     const std::filesystem::path output_path =
-        std::filesystem::temp_directory_path() / "zara_synthetic_riscv64.elf";
+        std::filesystem::temp_directory_path() / "rothalyx_synthetic_riscv64.elf";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -110,13 +110,13 @@ std::filesystem::path write_synthetic_riscv_elf() {
 int main() {
     const std::filesystem::path binary_path = write_synthetic_riscv_elf();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
     }
-    if (image.architecture() != zara::loader::Architecture::RISCV64) {
+    if (image.architecture() != rothalyx::loader::Architecture::RISCV64) {
         std::cerr << "expected riscv64 architecture\n";
         return 2;
     }
@@ -125,14 +125,14 @@ int main() {
         return 3;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map riscv image\n";
         return 4;
     }
 
-    zara::disasm::Disassembler disassembler;
-    if (!disassembler.is_supported(zara::loader::Architecture::RISCV64)) {
+    rothalyx::disasm::Disassembler disassembler;
+    if (!disassembler.is_supported(rothalyx::loader::Architecture::RISCV64)) {
         std::cerr << "expected riscv64 decode support\n";
         return 5;
     }
@@ -147,12 +147,12 @@ int main() {
         return 7;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.empty()) {
         std::cerr << "expected discovered riscv64 function\n";
         return 8;
     }
-    if (analysis.functions.front().summary.calling_convention != zara::analysis::CallingConvention::RiscV64SysV) {
+    if (analysis.functions.front().summary.calling_convention != rothalyx::analysis::CallingConvention::RiscV64SysV) {
         std::cerr << "expected riscv64 calling convention\n";
         return 9;
     }

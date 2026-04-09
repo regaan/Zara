@@ -10,8 +10,8 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -158,7 +158,7 @@ std::filesystem::path write_synthetic_macho_with_chained_fixups() {
     write_ascii(bytes, kFixupsOffset + 0x44, fixup_symbols);
 
     const std::filesystem::path output_path =
-        std::filesystem::temp_directory_path() / "zara_synthetic_chained_fixups.macho";
+        std::filesystem::temp_directory_path() / "rothalyx_synthetic_chained_fixups.macho";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -170,23 +170,23 @@ std::filesystem::path write_synthetic_macho_with_chained_fixups() {
 int main() {
     const std::filesystem::path binary_path = write_synthetic_macho_with_chained_fixups();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(
+    if (!rothalyx::loader::BinaryImage::load_from_file(
             binary_path,
             image,
             error,
-            zara::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x200000000ULL}
+            rothalyx::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x200000000ULL}
         )) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
     }
 
-    if (image.format() != zara::loader::BinaryFormat::MachO) {
+    if (image.format() != rothalyx::loader::BinaryFormat::MachO) {
         std::cerr << "expected Mach-O format\n";
         return 2;
     }
-    if (image.architecture() != zara::loader::Architecture::X86_64) {
+    if (image.architecture() != rothalyx::loader::Architecture::X86_64) {
         std::cerr << "expected x86_64 architecture\n";
         return 3;
     }
@@ -198,7 +198,7 @@ int main() {
     const auto imported = std::find_if(
         image.imports().begin(),
         image.imports().end(),
-        [](const zara::loader::ImportedSymbol& symbol) {
+        [](const rothalyx::loader::ImportedSymbol& symbol) {
             return symbol.library == "libSystem.B.dylib" &&
                    symbol.name == "puts" &&
                    symbol.address == 0x200001008ULL;
@@ -215,7 +215,7 @@ int main() {
     const auto exported = std::find_if(
         image.exports().begin(),
         image.exports().end(),
-        [](const zara::loader::ExportedSymbol& symbol) {
+        [](const rothalyx::loader::ExportedSymbol& symbol) {
             return symbol.name == "main" && symbol.address == 0x200000200ULL;
         }
     );
@@ -224,7 +224,7 @@ int main() {
         return 6;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map macho image\n";
         return 7;

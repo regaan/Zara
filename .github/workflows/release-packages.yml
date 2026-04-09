@@ -57,7 +57,7 @@ jobs:
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zara-linux-packages
+          name: rothalyx-linux-packages
           path: |
             artifacts/linux/*.deb
             artifacts/linux/*.AppImage
@@ -87,7 +87,7 @@ jobs:
       - name: Upload Pacman artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zara-archlinux-packages
+          name: rothalyx-archlinux-packages
           path: artifacts/archlinux/*
           if-no-files-found: error
           retention-days: 14
@@ -122,7 +122,7 @@ jobs:
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zara-macos-dmg
+          name: rothalyx-macos-dmg
           path: artifacts/macos/*.dmg
           if-no-files-found: error
           retention-days: 14
@@ -177,7 +177,7 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zara-windows-installer
+          name: rothalyx-windows-installer
           path: artifacts/windows/*
           if-no-files-found: error
           retention-days: 14
@@ -201,7 +201,7 @@ jobs:
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: zara-*
+          pattern: rothalyx-*
           path: release-assets
           merge-multiple: true
 
@@ -232,7 +232,7 @@ jobs:
           if [ -f ".github/release-notes/${GITHUB_REF_NAME}.title.txt" ]; then
             title="$(cat ".github/release-notes/${GITHUB_REF_NAME}.title.txt")"
           else
-            title="ZARA RE FRAMEWORK ${GITHUB_REF_NAME}"
+            title="ROTHALYX RE FRAMEWORK ${GITHUB_REF_NAME}"
           fi
           echo "title=${title}" >> "$GITHUB_OUTPUT"
 

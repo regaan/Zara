@@ -1,4 +1,4 @@
-#include "zara/desktop_qt/app/secret_store.hpp"
+#include "rothalyx/desktop_qt/app/secret_store.hpp"
 
 #include <QObject>
 #include <QProcess>
@@ -10,12 +10,12 @@
 #include <wincred.h>
 #endif
 
-namespace zara::desktop_qt::app {
+namespace rothalyx::desktop_qt::app {
 
 namespace {
 
 QString service_name() {
-    return "zara.re.framework.ai";
+    return "rothalyx.re.framework.ai";
 }
 
 #if !defined(_WIN32)
@@ -73,10 +73,10 @@ QString SecretStore::availability_description() {
     return "API keys are stored in Windows Credential Manager.";
 #elif defined(__APPLE__)
     return is_available() ? "API keys are stored in the macOS Keychain."
-                          : "The macOS security tool is not available. Zara will rely on environment variables for provider credentials.";
+                          : "The macOS security tool is not available. Rothalyx will rely on environment variables for provider credentials.";
 #else
     return is_available() ? "API keys are stored through the Secret Service keyring."
-                          : "secret-tool is not available. Zara will rely on environment variables for provider credentials.";
+                          : "secret-tool is not available. Rothalyx will rely on environment variables for provider credentials.";
 #endif
 }
 
@@ -181,7 +181,7 @@ bool SecretStore::write_secret(const QString& account, const QString& secret, QS
     QByteArray ignored;
     return run_process(
         QStandardPaths::findExecutable("secret-tool"),
-        {"store", "--label", "ZARA RE FRAMEWORK AI", "service", service_name(), "account", account},
+        {"store", "--label", "ROTHALYX RE FRAMEWORK AI", "service", service_name(), "account", account},
         secret.toUtf8(),
         ignored,
         out_error
@@ -242,4 +242,4 @@ bool SecretStore::delete_secret(const QString& account, QString& out_error) {
 #endif
 }
 
-}  // namespace zara::desktop_qt::app
+}  // namespace rothalyx::desktop_qt::app

@@ -7,5 +7,5 @@ step
 findings
 patterns
 targets
-scaffold /tmp/zara-debug-shell-smoke.py
+scaffold /tmp/rothalyx-debug-shell-smoke.py
 quit

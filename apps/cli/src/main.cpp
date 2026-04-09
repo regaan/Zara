@@ -12,29 +12,29 @@
 #include <string>
 #include <vector>
 
-#include "zara/ai/assistant.hpp"
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/cfg/function_graph.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/decompiler/decompiler.hpp"
-#include "zara/debugger/session.hpp"
-#include "zara/diff/engine.hpp"
-#include "zara/distributed/batch_runner.hpp"
-#include "zara/ir/lifter.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/plugins/manager.hpp"
-#include "zara/security/workflow.hpp"
-#include "zara/scripting/python_engine.hpp"
-#include "zara/ssa/builder.hpp"
-#include "zara/type/recovery.hpp"
+#include "rothalyx/ai/assistant.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/cfg/function_graph.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/decompiler/decompiler.hpp"
+#include "rothalyx/debugger/session.hpp"
+#include "rothalyx/diff/engine.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
+#include "rothalyx/ir/lifter.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/plugins/manager.hpp"
+#include "rothalyx/security/workflow.hpp"
+#include "rothalyx/scripting/python_engine.hpp"
+#include "rothalyx/ssa/builder.hpp"
+#include "rothalyx/type/recovery.hpp"
 
 namespace {
 
 struct LoadedProgram {
-    zara::loader::BinaryImage image;
-    zara::memory::AddressSpace address_space;
-    zara::analysis::ProgramAnalysis analysis;
+    rothalyx::loader::BinaryImage image;
+    rothalyx::memory::AddressSpace address_space;
+    rothalyx::analysis::ProgramAnalysis analysis;
 };
 
 std::string format_address(const std::uint64_t value) {
@@ -73,7 +73,7 @@ bool patch_overlaps_breakpoints(
     return false;
 }
 
-void print_registers(const zara::debugger::RegisterState& registers) {
+void print_registers(const rothalyx::debugger::RegisterState& registers) {
     std::cout
         << "Registers\n"
         << "  RIP " << format_address(registers.rip) << '\n'
@@ -87,15 +87,15 @@ void print_registers(const zara::debugger::RegisterState& registers) {
         << "  RDI " << format_address(registers.rdi) << '\n';
 }
 
-void print_stop_event(const zara::debugger::StopEvent& event) {
-    std::cout << "Stop: " << zara::debugger::to_string(event.reason);
+void print_stop_event(const rothalyx::debugger::StopEvent& event) {
+    std::cout << "Stop: " << rothalyx::debugger::to_string(event.reason);
     if (event.address.has_value()) {
         std::cout << "  @" << format_address(*event.address);
     }
     if (event.signal != 0) {
         std::cout << "  signal=" << event.signal;
     }
-    if (event.reason == zara::debugger::StopReason::Exited) {
+    if (event.reason == rothalyx::debugger::StopReason::Exited) {
         std::cout << "  exit=" << event.exit_code;
     }
     if (!event.message.empty()) {
@@ -104,7 +104,7 @@ void print_stop_event(const zara::debugger::StopEvent& event) {
     std::cout << '\n';
 }
 
-void print_runtime_snapshot(const zara::debugger::RuntimeSnapshot& snapshot) {
+void print_runtime_snapshot(const rothalyx::debugger::RuntimeSnapshot& snapshot) {
     std::cout << "Runtime snapshot\n";
     std::cout << "  RIP " << format_address(snapshot.registers.rip) << '\n';
     if (!snapshot.instruction_bytes.empty()) {
@@ -140,7 +140,7 @@ std::optional<LoadedProgram> load_program(const std::filesystem::path& binary_pa
     out_error.clear();
 
     LoadedProgram program;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, program.image, out_error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, program.image, out_error)) {
         return std::nullopt;
     }
 
@@ -149,20 +149,20 @@ std::optional<LoadedProgram> load_program(const std::filesystem::path& binary_pa
         return std::nullopt;
     }
 
-    program.analysis = zara::analysis::Analyzer::analyze(program.image, program.address_space);
+    program.analysis = rothalyx::analysis::Analyzer::analyze(program.image, program.address_space);
     return program;
 }
 
 bool persist_project_if_needed(
     const std::filesystem::path& project_path,
     const LoadedProgram& loaded,
-    const zara::ai::AssistantOptions* assistant_options,
+    const rothalyx::ai::AssistantOptions* assistant_options,
     const bool allow_cache,
     bool& out_cache_hit,
     std::string& out_error
 ) {
     out_cache_hit = false;
-    zara::database::ProjectStore project_store(project_path);
+    rothalyx::database::ProjectStore project_store(project_path);
     if (allow_cache) {
         if (const auto cached = project_store.find_cached_analysis_run(loaded.image, out_error); cached.has_value()) {
             out_cache_hit = true;
@@ -233,13 +233,13 @@ bool parse_hex_byte(std::string_view token, std::byte& out_value) {
 }
 
 std::optional<std::uint64_t> find_function_entry_by_name(
-    const zara::analysis::ProgramAnalysis& analysis,
+    const rothalyx::analysis::ProgramAnalysis& analysis,
     std::string_view name
 ) {
     const auto function_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [&](const zara::analysis::DiscoveredFunction& function) { return function.name == name; }
+        [&](const rothalyx::analysis::DiscoveredFunction& function) { return function.name == name; }
     );
     if (function_it == analysis.functions.end()) {
         return std::nullopt;
@@ -250,7 +250,7 @@ std::optional<std::uint64_t> find_function_entry_by_name(
 std::optional<std::uint64_t> resolve_debug_address(
     std::string_view token,
     const std::optional<LoadedProgram>& loaded_program,
-    const std::optional<zara::debugger::RegisterState>& registers
+    const std::optional<rothalyx::debugger::RegisterState>& registers
 ) {
     if (token == "rip" && registers.has_value()) {
         return registers->rip;
@@ -283,7 +283,7 @@ std::optional<std::uint64_t> resolve_debug_address(
     return std::nullopt;
 }
 
-void print_vulnerability_patterns(const zara::security::ExploitReport& report, const std::size_t max_count) {
+void print_vulnerability_patterns(const rothalyx::security::ExploitReport& report, const std::size_t max_count) {
     if (report.patterns.empty()) {
         return;
     }
@@ -293,7 +293,7 @@ void print_vulnerability_patterns(const zara::security::ExploitReport& report, c
         const auto& pattern = report.patterns[index];
         std::cout
             << "  ["
-            << zara::security::to_string(pattern.severity)
+            << rothalyx::security::to_string(pattern.severity)
             << "] "
             << pattern.function_name
             << "  "
@@ -306,7 +306,7 @@ void print_vulnerability_patterns(const zara::security::ExploitReport& report, c
     }
 }
 
-void print_poc_targets(const zara::security::ExploitReport& report, const std::size_t max_count) {
+void print_poc_targets(const rothalyx::security::ExploitReport& report, const std::size_t max_count) {
     if (report.poc_targets.empty()) {
         return;
     }
@@ -328,7 +328,7 @@ void print_poc_targets(const zara::security::ExploitReport& report, const std::s
     }
 }
 
-void print_stack_visualizations(const zara::security::ExploitReport& report, const std::size_t max_count) {
+void print_stack_visualizations(const rothalyx::security::ExploitReport& report, const std::size_t max_count) {
     if (report.stack_visualizations.empty()) {
         return;
     }
@@ -343,7 +343,7 @@ void print_stack_visualizations(const zara::security::ExploitReport& report, con
     }
 }
 
-void print_mutation_hooks(const zara::security::FuzzingReport& report, const std::size_t max_count) {
+void print_mutation_hooks(const rothalyx::security::FuzzingReport& report, const std::size_t max_count) {
     if (report.mutation_hooks.empty()) {
         return;
     }
@@ -359,7 +359,7 @@ void print_mutation_hooks(const zara::security::FuzzingReport& report, const std
     }
 }
 
-void print_harness_artifacts(const zara::security::FuzzingReport& report) {
+void print_harness_artifacts(const rothalyx::security::FuzzingReport& report) {
     if (report.harness_artifacts.empty()) {
         return;
     }
@@ -372,12 +372,12 @@ void print_harness_artifacts(const zara::security::FuzzingReport& report) {
 
 void print_debug_target_shapes() {
     std::cout << "Debugger target shapes\n";
-    for (const auto& shape : zara::debugger::DebugSession::target_shapes()) {
+    for (const auto& shape : rothalyx::debugger::DebugSession::target_shapes()) {
         std::cout
             << "  "
-            << zara::debugger::to_string(shape.platform)
+            << rothalyx::debugger::to_string(shape.platform)
             << "  "
-            << zara::debugger::to_string(shape.backend)
+            << rothalyx::debugger::to_string(shape.backend)
             << "  implemented="
             << (shape.implemented ? "yes" : "no");
         if (shape.selected_on_host) {
@@ -390,7 +390,7 @@ void print_debug_target_shapes() {
     }
 }
 
-void print_batch_summary(const zara::distributed::BatchResult& result) {
+void print_batch_summary(const rothalyx::distributed::BatchResult& result) {
     std::cout << "  worker-slots " << result.worker_slots << '\n';
     std::cout << "  mode         " << (result.remote ? "remote-controller" : "local") << '\n';
     std::cout << "  protocol     " << result.protocol_version << '\n';
@@ -442,13 +442,13 @@ void print_batch_summary(const zara::distributed::BatchResult& result) {
 }
 
 bool print_current_snapshot(
-    zara::debugger::DebugSession& debugger,
+    rothalyx::debugger::DebugSession& debugger,
     const std::optional<LoadedProgram>& loaded_program,
-    const zara::debugger::StopEvent& event,
-    std::optional<zara::debugger::RegisterState>& out_registers,
+    const rothalyx::debugger::StopEvent& event,
+    std::optional<rothalyx::debugger::RegisterState>& out_registers,
     std::string& out_error
 ) {
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (!debugger.read_registers(registers, out_error)) {
         return false;
     }
@@ -460,8 +460,8 @@ bool print_current_snapshot(
         return true;
     }
 
-    zara::debugger::RuntimeSnapshot snapshot;
-    if (!zara::debugger::capture_runtime_snapshot(
+    rothalyx::debugger::RuntimeSnapshot snapshot;
+    if (!rothalyx::debugger::capture_runtime_snapshot(
             debugger,
             loaded_program->image,
             loaded_program->analysis,
@@ -476,7 +476,7 @@ bool print_current_snapshot(
     return true;
 }
 
-void print_ai_preview(const std::vector<zara::ai::FunctionInsight>& insights, const std::size_t max_count) {
+void print_ai_preview(const std::vector<rothalyx::ai::FunctionInsight>& insights, const std::size_t max_count) {
     if (insights.empty()) {
         return;
     }
@@ -499,7 +499,7 @@ void print_ai_preview(const std::vector<zara::ai::FunctionInsight>& insights, co
     }
 }
 
-void print_ai_metadata(const zara::ai::AssistantRunMetadata& metadata) {
+void print_ai_metadata(const rothalyx::ai::AssistantRunMetadata& metadata) {
     std::cout << "AI backend: " << metadata.backend << '\n';
     if (!metadata.model.empty()) {
         std::cout << "AI model:   " << metadata.model << '\n';
@@ -513,7 +513,7 @@ void print_ai_metadata(const zara::ai::AssistantRunMetadata& metadata) {
 }
 
 void print_security_preview(
-    const zara::security::ExploitReport& report,
+    const rothalyx::security::ExploitReport& report,
     const std::size_t max_findings,
     const std::size_t max_gadgets
 ) {
@@ -523,7 +523,7 @@ void print_security_preview(
             const auto& finding = report.findings[index];
             std::cout
                 << "  ["
-                << zara::security::to_string(finding.severity)
+                << rothalyx::security::to_string(finding.severity)
                 << "] "
                 << finding.function_name
                 << "  "
@@ -552,28 +552,28 @@ void print_security_preview(
 void print_usage() {
     std::cerr
         << "Usage:\n"
-        << "  zara_cli <binary-path> [project-db-path]\n"
-        << "  zara_cli ai <binary-path> [project-db-path]\n"
-        << "  zara_cli ai-model <binary-path> [project-db-path]\n"
-        << "  zara_cli exploit <binary-path> [project-db-path]\n"
-        << "  zara_cli fuzz-map <binary-path> <trace-path> [harness-output-dir]\n"
-        << "  zara_cli fuzz-live <binary-path> <bundle-output-dir> <tool-command...>\n"
-        << "  zara_cli batch <input-path> <output-dir> [concurrency] [shard-count] [shard-index]\n"
-        << "  zara_cli batch-controller <input-path> <output-dir> <port> <workers> [max-jobs-per-worker]\n"
-        << "  zara_cli batch-worker <host> <port> <output-dir>\n"
-        << "    remote batch modes require ZARA_BATCH_SHARED_SECRET or an explicit shared_secret in scripting\n"
-        << "    optional TLS env: ZARA_BATCH_USE_TLS=1 ZARA_BATCH_TLS_CERT=<pem> ZARA_BATCH_TLS_KEY=<pem> ZARA_BATCH_TLS_CA=<pem>\n"
-        << "  zara_cli debug-targets\n"
-        << "  zara_cli debug <binary-path> [args...]\n"
-        << "  zara_cli debug-attach <pid>\n"
-        << "  zara_cli debug-shell <binary-path> [--script <commands.txt>] [args...]\n"
-        << "  zara_cli script --repl [args...]\n"
-        << "  zara_cli script <script-path> [args...]\n"
-        << "  zara_cli script -c <code> [args...]\n"
-        << "  zara_cli plugins <plugins-dir> <binary-path>\n"
-        << "  zara_cli plugins-marketplace list <marketplace-root>\n"
-        << "  zara_cli plugins-marketplace install <marketplace-root> <plugin-name> <destination-root>\n"
-        << "  zara_cli diff <before-binary> <after-binary>\n";
+        << "  rothalyx_cli <binary-path> [project-db-path]\n"
+        << "  rothalyx_cli ai <binary-path> [project-db-path]\n"
+        << "  rothalyx_cli ai-model <binary-path> [project-db-path]\n"
+        << "  rothalyx_cli exploit <binary-path> [project-db-path]\n"
+        << "  rothalyx_cli fuzz-map <binary-path> <trace-path> [harness-output-dir]\n"
+        << "  rothalyx_cli fuzz-live <binary-path> <bundle-output-dir> <tool-command...>\n"
+        << "  rothalyx_cli batch <input-path> <output-dir> [concurrency] [shard-count] [shard-index]\n"
+        << "  rothalyx_cli batch-controller <input-path> <output-dir> <port> <workers> [max-jobs-per-worker]\n"
+        << "  rothalyx_cli batch-worker <host> <port> <output-dir>\n"
+        << "    remote batch modes require ROTHALYX_BATCH_SHARED_SECRET or an explicit shared_secret in scripting\n"
+        << "    optional TLS env: ROTHALYX_BATCH_USE_TLS=1 ROTHALYX_BATCH_TLS_CERT=<pem> ROTHALYX_BATCH_TLS_KEY=<pem> ROTHALYX_BATCH_TLS_CA=<pem>\n"
+        << "  rothalyx_cli debug-targets\n"
+        << "  rothalyx_cli debug <binary-path> [args...]\n"
+        << "  rothalyx_cli debug-attach <pid>\n"
+        << "  rothalyx_cli debug-shell <binary-path> [--script <commands.txt>] [args...]\n"
+        << "  rothalyx_cli script --repl [args...]\n"
+        << "  rothalyx_cli script <script-path> [args...]\n"
+        << "  rothalyx_cli script -c <code> [args...]\n"
+        << "  rothalyx_cli plugins <plugins-dir> <binary-path>\n"
+        << "  rothalyx_cli plugins-marketplace list <marketplace-root>\n"
+        << "  rothalyx_cli plugins-marketplace install <marketplace-root> <plugin-name> <destination-root>\n"
+        << "  rothalyx_cli diff <before-binary> <after-binary>\n";
 }
 
 int run_analysis_mode(const std::filesystem::path& binary_path, const std::filesystem::path& project_path) {
@@ -584,12 +584,12 @@ int run_analysis_mode(const std::filesystem::path& binary_path, const std::files
         return 1;
     }
 
-    const auto ai_insights = zara::ai::Assistant::analyze_program(loaded->analysis, loaded->image.entry_point());
-    const auto security_report = zara::security::Workflow::analyze_exploit_surface(binary_path, loaded->analysis, 32);
+    const auto ai_insights = rothalyx::ai::Assistant::analyze_program(loaded->analysis, loaded->image.entry_point());
+    const auto security_report = rothalyx::security::Workflow::analyze_exploit_surface(binary_path, loaded->analysis, 32);
 
     std::cout << "Loaded: " << loaded->image.source_path() << '\n';
-    std::cout << "Format: " << zara::loader::to_string(loaded->image.format()) << '\n';
-    std::cout << "Arch:   " << zara::loader::to_string(loaded->image.architecture()) << '\n';
+    std::cout << "Format: " << rothalyx::loader::to_string(loaded->image.format()) << '\n';
+    std::cout << "Arch:   " << rothalyx::loader::to_string(loaded->image.architecture()) << '\n';
     std::cout << "Base:   " << format_address(loaded->image.base_address()) << '\n';
     if (loaded->image.entry_point().has_value()) {
         std::cout << "Entry:  " << format_address(*loaded->image.entry_point()) << '\n';
@@ -698,7 +698,7 @@ int run_analysis_mode(const std::filesystem::path& binary_path, const std::files
             for (const auto& block : first_function.lifted_ir.blocks) {
                 std::cout << "  block " << format_address(block.start_address) << '\n';
                 for (const auto& instruction : block.instructions) {
-                    std::cout << "    " << zara::ir::format_instruction(instruction) << '\n';
+                    std::cout << "    " << rothalyx::ir::format_instruction(instruction) << '\n';
                     ++emitted;
                     if (emitted >= 24) {
                         break;
@@ -716,10 +716,10 @@ int run_analysis_mode(const std::filesystem::path& binary_path, const std::files
             for (const auto& block : first_function.ssa_form.blocks) {
                 std::cout << "  block " << format_address(block.start_address) << '\n';
                 for (const auto& phi : block.phi_nodes) {
-                    std::cout << "    " << zara::ssa::format_phi(phi) << '\n';
+                    std::cout << "    " << rothalyx::ssa::format_phi(phi) << '\n';
                 }
                 for (const auto& instruction : block.instructions) {
-                    std::cout << "    " << zara::ir::format_instruction(instruction) << '\n';
+                    std::cout << "    " << rothalyx::ir::format_instruction(instruction) << '\n';
                     ++emitted;
                     if (emitted >= 24) {
                         break;
@@ -735,7 +735,7 @@ int run_analysis_mode(const std::filesystem::path& binary_path, const std::files
             std::cout << "\nRecovered types\n";
             for (std::size_t index = 0; index < std::min<std::size_t>(first_function.recovered_types.variables.size(), 16); ++index) {
                 const auto& variable = first_function.recovered_types.variables[index];
-                std::cout << "  " << variable.name << " : " << zara::ir::to_string(variable.type) << '\n';
+                std::cout << "  " << variable.name << " : " << rothalyx::ir::to_string(variable.type) << '\n';
             }
         }
 
@@ -783,7 +783,7 @@ int run_analysis_mode(const std::filesystem::path& binary_path, const std::files
                 << " -> "
                 << format_address(xref.to_address)
                 << "  "
-                << zara::xrefs::to_string(xref.kind);
+                << rothalyx::xrefs::to_string(xref.kind);
             if (!xref.label.empty()) {
                 std::cout << "  " << xref.label;
             }
@@ -859,17 +859,17 @@ int run_ai_mode(
         return 1;
     }
 
-    zara::ai::AssistantRunMetadata ai_metadata;
+    rothalyx::ai::AssistantRunMetadata ai_metadata;
     const auto assistant_options =
-        model_backed ? zara::ai::Assistant::options_from_environment() : zara::ai::AssistantOptions{};
+        model_backed ? rothalyx::ai::Assistant::options_from_environment() : rothalyx::ai::AssistantOptions{};
     const auto insights =
-        model_backed ? zara::ai::Assistant::analyze_program(
+        model_backed ? rothalyx::ai::Assistant::analyze_program(
                            loaded->analysis,
                            loaded->image.entry_point(),
                            assistant_options,
                            &ai_metadata
                        )
-                     : zara::ai::Assistant::analyze_program(loaded->analysis, loaded->image.entry_point());
+                     : rothalyx::ai::Assistant::analyze_program(loaded->analysis, loaded->image.entry_point());
     if (!model_backed) {
         ai_metadata.backend = "heuristic";
     }
@@ -906,7 +906,7 @@ int run_exploit_mode(
         return 1;
     }
 
-    const auto report = zara::security::Workflow::analyze_exploit_surface(binary_path, loaded->analysis);
+    const auto report = rothalyx::security::Workflow::analyze_exploit_surface(binary_path, loaded->analysis);
     std::cout << "Exploit surface for " << binary_path << '\n';
     std::cout << "  findings " << report.findings.size() << '\n';
     std::cout << "  gadgets  " << report.gadgets.size() << '\n';
@@ -947,13 +947,13 @@ int run_fuzz_mode(
         return 1;
     }
 
-    zara::security::CrashTrace trace;
-    if (!zara::security::Workflow::parse_trace_file(trace_path, trace, error)) {
+    rothalyx::security::CrashTrace trace;
+    if (!rothalyx::security::Workflow::parse_trace_file(trace_path, trace, error)) {
         std::cerr << "Trace parse failed: " << error << '\n';
         return 1;
     }
 
-    const auto report = zara::security::Workflow::analyze_fuzzing_surface(binary_path, loaded->analysis, trace);
+    const auto report = rothalyx::security::Workflow::analyze_fuzzing_surface(binary_path, loaded->analysis, trace);
     std::cout << "Fuzz/crash mapping for " << binary_path << '\n';
     if (!trace.input_label.empty()) {
         std::cout << "  input    " << trace.input_label << '\n';
@@ -994,7 +994,7 @@ int run_fuzz_mode(
         for (const auto& hint : report.crash_hints) {
             std::cout
                 << "  ["
-                << zara::security::to_string(hint.severity)
+                << rothalyx::security::to_string(hint.severity)
                 << "] "
                 << hint.function_name
                 << "  "
@@ -1009,7 +1009,7 @@ int run_fuzz_mode(
 
     if (harness_output_directory.has_value()) {
         std::vector<std::filesystem::path> written_paths;
-        if (!zara::security::Workflow::write_harness_bundle(
+        if (!rothalyx::security::Workflow::write_harness_bundle(
                 *harness_output_directory,
                 report,
                 &written_paths,
@@ -1040,11 +1040,11 @@ int run_fuzz_live_mode(
         return 1;
     }
 
-    zara::security::CrashTrace trace;
+    rothalyx::security::CrashTrace trace;
     trace.input_label = "live-feedback";
-    const auto report = zara::security::Workflow::analyze_fuzzing_surface(binary_path, loaded->analysis, trace);
+    const auto report = rothalyx::security::Workflow::analyze_fuzzing_surface(binary_path, loaded->analysis, trace);
     std::vector<std::filesystem::path> written_paths;
-    if (!zara::security::Workflow::write_harness_bundle(
+    if (!rothalyx::security::Workflow::write_harness_bundle(
             harness_output_directory,
             report,
             &written_paths,
@@ -1058,16 +1058,16 @@ int run_fuzz_live_mode(
     std::cout << "  bundle     " << harness_output_directory << '\n';
     std::cout << "  command    " << tool_command << "\n\n";
 
-    zara::security::LiveFuzzResult result;
-    if (!zara::security::Workflow::run_live_fuzz_tool(
+    rothalyx::security::LiveFuzzResult result;
+    if (!rothalyx::security::Workflow::run_live_fuzz_tool(
             tool_command,
-            zara::security::LiveFuzzOptions{
+            rothalyx::security::LiveFuzzOptions{
                 .working_directory = harness_output_directory,
                 .engine_hint = tool_command,
                 .max_output_lines = 4096,
                 .max_line_bytes = 16384,
                 .on_event =
-                    [](const zara::security::FuzzProgressEvent& event) {
+                    [](const rothalyx::security::FuzzProgressEvent& event) {
                         std::cout << "[fuzz] " << event.kind;
                         if (event.executions.has_value()) {
                             std::cout << "  exec=" << *event.executions;
@@ -1105,16 +1105,16 @@ int run_batch_mode(
     const std::size_t shard_count,
     const std::size_t shard_index
 ) {
-    const auto inputs = zara::distributed::BatchRunner::discover_inputs(input_path);
+    const auto inputs = rothalyx::distributed::BatchRunner::discover_inputs(input_path);
     if (inputs.empty()) {
         std::cerr << "No candidate binaries found under " << input_path << '\n';
         return 1;
     }
 
-    const auto result = zara::distributed::BatchRunner::analyze(
+    const auto result = rothalyx::distributed::BatchRunner::analyze(
         inputs,
         output_directory,
-        zara::distributed::BatchOptions{
+        rothalyx::distributed::BatchOptions{
             .concurrency = concurrency,
             .shard_count = shard_count,
             .shard_index = shard_index,
@@ -1125,11 +1125,11 @@ int run_batch_mode(
     std::string error;
     const auto manifest_path = output_directory / "manifest.tsv";
     const auto summary_path = output_directory / "summary.json";
-    if (!zara::distributed::BatchRunner::write_manifest(manifest_path, result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_manifest(manifest_path, result, error)) {
         std::cerr << "Manifest write failed: " << error << '\n';
         return 1;
     }
-    if (!zara::distributed::BatchRunner::write_summary(summary_path, result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_summary(summary_path, result, error)) {
         std::cerr << "Summary write failed: " << error << '\n';
         return 1;
     }
@@ -1167,22 +1167,22 @@ int run_batch_controller_mode(
     const std::size_t worker_count,
     const std::size_t max_jobs_per_worker
 ) {
-    const auto inputs = zara::distributed::BatchRunner::discover_inputs(input_path);
+    const auto inputs = rothalyx::distributed::BatchRunner::discover_inputs(input_path);
     if (inputs.empty()) {
         std::cerr << "No candidate binaries found under " << input_path << '\n';
         return 1;
     }
 
-    zara::distributed::BatchResult result;
+    rothalyx::distributed::BatchResult result;
     std::string error;
-    if (!zara::distributed::BatchRunner::analyze_remote(
+    if (!rothalyx::distributed::BatchRunner::analyze_remote(
             inputs,
             output_directory,
-            zara::distributed::RemoteOptions{
+            rothalyx::distributed::RemoteOptions{
                 .host = "127.0.0.1",
                 .port = port,
                 .expected_workers = worker_count,
-                .protocol_version = "zara-batch/2",
+                .protocol_version = "rothalyx-batch/2",
                 .accept_timeout_ms = 10000,
                 .read_timeout_ms = 10000,
                 .max_message_bytes = 64u * 1024u,
@@ -1207,11 +1207,11 @@ int run_batch_controller_mode(
 
     const auto manifest_path = output_directory / "manifest.tsv";
     const auto summary_path = output_directory / "summary.json";
-    if (!zara::distributed::BatchRunner::write_manifest(manifest_path, result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_manifest(manifest_path, result, error)) {
         std::cerr << "Manifest write failed: " << error << '\n';
         return 1;
     }
-    if (!zara::distributed::BatchRunner::write_summary(summary_path, result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_summary(summary_path, result, error)) {
         std::cerr << "Summary write failed: " << error << '\n';
         return 1;
     }
@@ -1236,13 +1236,13 @@ int run_batch_worker_mode(
     const std::filesystem::path& output_directory
 ) {
     std::string error;
-    if (!zara::distributed::BatchRunner::run_remote_worker(
+    if (!rothalyx::distributed::BatchRunner::run_remote_worker(
             output_directory,
-            zara::distributed::RemoteOptions{
+            rothalyx::distributed::RemoteOptions{
                 .host = host,
                 .port = port,
                 .expected_workers = 1,
-                .protocol_version = "zara-batch/2",
+                .protocol_version = "rothalyx-batch/2",
                 .accept_timeout_ms = 10000,
                 .read_timeout_ms = 10000,
                 .max_message_bytes = 64u * 1024u,
@@ -1278,7 +1278,7 @@ int run_debug_shell_mode(
     const std::vector<std::string>& arguments,
     const std::optional<std::filesystem::path>& script_path
 ) {
-    auto debugger = zara::debugger::DebugSession::create_native();
+    auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         std::cerr << "Debugger backend is unavailable on this platform.\n";
         print_debug_target_shapes();
@@ -1292,12 +1292,12 @@ int run_debug_shell_mode(
         error.clear();
     }
     const auto exploit_report = loaded_program.has_value()
-                                    ? std::optional<zara::security::ExploitReport>(
-                                          zara::security::Workflow::analyze_exploit_surface(binary_path, loaded_program->analysis)
+                                    ? std::optional<rothalyx::security::ExploitReport>(
+                                          rothalyx::security::Workflow::analyze_exploit_surface(binary_path, loaded_program->analysis)
                                       )
                                     : std::nullopt;
 
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->launch(binary_path, arguments, event, error)) {
         std::cerr << "Launch failed: " << error << '\n';
         return 1;
@@ -1348,7 +1348,7 @@ int run_debug_shell_mode(
             << "  quit|q                  Terminate the launched process and exit\n";
     };
 
-    std::optional<zara::debugger::RegisterState> registers;
+    std::optional<rothalyx::debugger::RegisterState> registers;
     if (!print_current_snapshot(*debugger, loaded_program, event, registers, error)) {
         std::cout << "Initial snapshot skipped: " << error << '\n';
         error.clear();
@@ -1360,7 +1360,7 @@ int run_debug_shell_mode(
     std::string line;
     while (true) {
         if (!scripted) {
-            std::cout << "zara(debug)> " << std::flush;
+            std::cout << "rothalyx(debug)> " << std::flush;
         }
         if (!std::getline(*input, line)) {
             break;
@@ -1371,7 +1371,7 @@ int run_debug_shell_mode(
             continue;
         }
         if (scripted) {
-            std::cout << "zara(debug)> " << line << '\n';
+            std::cout << "rothalyx(debug)> " << line << '\n';
         }
 
         const auto words = split_words(line);
@@ -1441,8 +1441,8 @@ int run_debug_shell_mode(
             }
 
             print_stop_event(event);
-            if (event.reason == zara::debugger::StopReason::Exited ||
-                event.reason == zara::debugger::StopReason::Terminated) {
+            if (event.reason == rothalyx::debugger::StopReason::Exited ||
+                event.reason == rothalyx::debugger::StopReason::Terminated) {
                 return 0;
             }
 
@@ -1454,7 +1454,7 @@ int run_debug_shell_mode(
         }
 
         if (command == "threads") {
-            std::vector<zara::debugger::ThreadInfo> threads;
+            std::vector<rothalyx::debugger::ThreadInfo> threads;
             if (!debugger->list_threads(threads, error)) {
                 std::cout << "Thread list failed: " << error << '\n';
                 error.clear();
@@ -1486,7 +1486,7 @@ int run_debug_shell_mode(
                 continue;
             }
 
-            if (!debugger->select_thread(static_cast<zara::debugger::ProcessId>(raw_tid), error)) {
+            if (!debugger->select_thread(static_cast<rothalyx::debugger::ProcessId>(raw_tid), error)) {
                 std::cout << "Thread selection failed: " << error << '\n';
                 error.clear();
                 continue;
@@ -1658,14 +1658,14 @@ int run_debug_shell_mode(
 }
 
 int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<std::string>& arguments) {
-    auto debugger = zara::debugger::DebugSession::create_native();
+    auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         std::cerr << "Debugger backend is unavailable on this platform.\n";
         return 1;
     }
 
     std::string error;
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->launch(binary_path, arguments, event, error)) {
         std::cerr << "Launch failed: " << error << '\n';
         return 1;
@@ -1675,7 +1675,7 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
     std::cout << "Process: " << debugger->process_id() << '\n';
     print_stop_event(event);
 
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (debugger->read_registers(registers, error)) {
         print_registers(registers);
     } else {
@@ -1685,7 +1685,7 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
 
     auto loaded_program = load_program(binary_path, error);
     const bool loaded_image = loaded_program.has_value();
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     if (loaded_image) {
         image = loaded_program->image;
     }
@@ -1712,14 +1712,14 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
             }
 
             print_stop_event(event);
-            if (event.reason == zara::debugger::StopReason::Breakpoint &&
+            if (event.reason == rothalyx::debugger::StopReason::Breakpoint &&
                 event.address.has_value() &&
                 *event.address == breakpoint_address) {
                 break;
             }
 
-            if (event.reason == zara::debugger::StopReason::Exited ||
-                event.reason == zara::debugger::StopReason::Terminated) {
+            if (event.reason == rothalyx::debugger::StopReason::Exited ||
+                event.reason == rothalyx::debugger::StopReason::Terminated) {
                 return 0;
             }
         }
@@ -1732,8 +1732,8 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
         }
 
         if (loaded_program.has_value()) {
-            zara::debugger::RuntimeSnapshot snapshot;
-            if (zara::debugger::capture_runtime_snapshot(
+            rothalyx::debugger::RuntimeSnapshot snapshot;
+            if (rothalyx::debugger::capture_runtime_snapshot(
                     *debugger,
                     loaded_program->image,
                     loaded_program->analysis,
@@ -1781,8 +1781,8 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
         }
 
         print_stop_event(event);
-        if (event.reason == zara::debugger::StopReason::Exited ||
-            event.reason == zara::debugger::StopReason::Terminated) {
+        if (event.reason == rothalyx::debugger::StopReason::Exited ||
+            event.reason == rothalyx::debugger::StopReason::Terminated) {
             return 0;
         }
     }
@@ -1792,15 +1792,15 @@ int run_debug_mode(const std::filesystem::path& binary_path, const std::vector<s
     return 1;
 }
 
-int run_debug_attach_mode(const zara::debugger::ProcessId process_id) {
-    auto debugger = zara::debugger::DebugSession::create_native();
+int run_debug_attach_mode(const rothalyx::debugger::ProcessId process_id) {
+    auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         std::cerr << "Debugger backend is unavailable on this platform.\n";
         return 1;
     }
 
     std::string error;
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->attach(process_id, event, error)) {
         std::cerr << "Attach failed: " << error << '\n';
         return 1;
@@ -1809,7 +1809,7 @@ int run_debug_attach_mode(const zara::debugger::ProcessId process_id) {
     std::cout << "Debugger backend: " << debugger->backend_name() << '\n';
     print_stop_event(event);
 
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (debugger->read_registers(registers, error)) {
         print_registers(registers);
     }
@@ -1829,11 +1829,11 @@ int run_plugins_marketplace_mode(const int argc, char** argv) {
         return 1;
     }
 
-    zara::plugins::PluginManager manager;
+    rothalyx::plugins::PluginManager manager;
     std::string error;
     const std::string_view action(argv[2]);
     if (action == "list") {
-        std::vector<zara::plugins::MarketplacePlugin> plugins;
+        std::vector<rothalyx::plugins::MarketplacePlugin> plugins;
         if (!manager.discover_marketplace(argv[3], plugins, error)) {
             std::cerr << "Marketplace discovery failed: " << error << '\n';
             return 1;
@@ -1876,7 +1876,7 @@ int run_script_mode(const int argc, char** argv) {
         return 1;
     }
 
-    zara::scripting::PythonEngine engine;
+    rothalyx::scripting::PythonEngine engine;
     if (!engine.is_available()) {
         std::cerr << "Embedded Python is unavailable in this build.\n";
         return 1;
@@ -1885,7 +1885,7 @@ int run_script_mode(const int argc, char** argv) {
     std::string error;
     std::vector<std::string> argv_values;
     if (std::string_view(argv[2]) == "--repl") {
-        argv_values.emplace_back("zara-repl");
+        argv_values.emplace_back("rothalyx-repl");
         for (int index = 3; index < argc; ++index) {
             argv_values.emplace_back(argv[index]);
         }
@@ -1941,7 +1941,7 @@ int run_script_mode(const int argc, char** argv) {
 }
 
 int run_plugins_mode(const std::filesystem::path& plugins_directory, const std::filesystem::path& binary_path) {
-    zara::plugins::PluginManager manager;
+    rothalyx::plugins::PluginManager manager;
     if (!manager.is_available()) {
         std::cerr << "Plugin runtime is unavailable in this build.\n";
         return 1;
@@ -1970,33 +1970,33 @@ int run_plugins_mode(const std::filesystem::path& plugins_directory, const std::
 int run_diff_mode(const std::filesystem::path& before_path, const std::filesystem::path& after_path) {
     std::string error;
 
-    zara::loader::BinaryImage before_image;
-    if (!zara::loader::BinaryImage::load_from_file(before_path, before_image, error)) {
+    rothalyx::loader::BinaryImage before_image;
+    if (!rothalyx::loader::BinaryImage::load_from_file(before_path, before_image, error)) {
         std::cerr << "Failed to load before binary: " << error << '\n';
         return 1;
     }
 
-    zara::memory::AddressSpace before_address_space;
+    rothalyx::memory::AddressSpace before_address_space;
     if (!before_address_space.map_image(before_image)) {
         std::cerr << "Failed to map before image into address space.\n";
         return 1;
     }
 
-    zara::loader::BinaryImage after_image;
-    if (!zara::loader::BinaryImage::load_from_file(after_path, after_image, error)) {
+    rothalyx::loader::BinaryImage after_image;
+    if (!rothalyx::loader::BinaryImage::load_from_file(after_path, after_image, error)) {
         std::cerr << "Failed to load after binary: " << error << '\n';
         return 1;
     }
 
-    zara::memory::AddressSpace after_address_space;
+    rothalyx::memory::AddressSpace after_address_space;
     if (!after_address_space.map_image(after_image)) {
         std::cerr << "Failed to map after image into address space.\n";
         return 1;
     }
 
-    const auto before_analysis = zara::analysis::Analyzer::analyze(before_image, before_address_space);
-    const auto after_analysis = zara::analysis::Analyzer::analyze(after_image, after_address_space);
-    const auto diff = zara::diff::Engine::diff(before_analysis, after_analysis);
+    const auto before_analysis = rothalyx::analysis::Analyzer::analyze(before_image, before_address_space);
+    const auto after_analysis = rothalyx::analysis::Analyzer::analyze(after_image, after_address_space);
+    const auto diff = rothalyx::diff::Engine::diff(before_analysis, after_analysis);
 
     std::cout << "Diff summary\n";
     std::cout << "  unchanged " << diff.unchanged_count << '\n';
@@ -2007,7 +2007,7 @@ int run_diff_mode(const std::filesystem::path& before_path, const std::filesyste
     std::cout << "\nFunction changes\n";
     for (std::size_t index = 0; index < std::min<std::size_t>(diff.changes.size(), 24); ++index) {
         const auto& change = diff.changes[index];
-        std::cout << "  " << zara::diff::to_string(change.kind) << "  ";
+        std::cout << "  " << rothalyx::diff::to_string(change.kind) << "  ";
         if (!change.old_name.empty()) {
             std::cout << change.old_name << "@" << format_address(change.old_entry);
         } else {
@@ -2019,8 +2019,8 @@ int run_diff_mode(const std::filesystem::path& before_path, const std::filesyste
         } else {
             std::cout << "-";
         }
-        if (change.kind == zara::diff::ChangeKind::Unchanged ||
-            change.kind == zara::diff::ChangeKind::Modified) {
+        if (change.kind == rothalyx::diff::ChangeKind::Unchanged ||
+            change.kind == rothalyx::diff::ChangeKind::Modified) {
             std::cout << "  sim=" << std::fixed << std::setprecision(3) << change.similarity;
         }
         std::cout << '\n';
@@ -2171,7 +2171,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        return run_debug_attach_mode(static_cast<zara::debugger::ProcessId>(std::stoi(argv[2])));
+        return run_debug_attach_mode(static_cast<rothalyx::debugger::ProcessId>(std::stoi(argv[2])));
     }
 
     if (std::string_view(argv[1]) == "script") {
@@ -2199,6 +2199,6 @@ int main(int argc, char** argv) {
     }
 
     const std::filesystem::path binary_path = argv[1];
-    const std::filesystem::path project_path = argc >= 3 ? argv[2] : "zara_project.sqlite";
+    const std::filesystem::path project_path = argc >= 3 ? argv[2] : "rothalyx_project.sqlite";
     return run_analysis_mode(binary_path, project_path);
 }

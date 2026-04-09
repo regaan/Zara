@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -16,28 +16,28 @@ std::vector<std::byte> to_bytes(const std::vector<std::uint8_t>& values) {
 }
 
 bool has_constant_prefix(
-    const std::vector<zara::analysis::ConstantValue>& constants,
+    const std::vector<rothalyx::analysis::ConstantValue>& constants,
     const std::string_view prefix,
     const std::int64_t expected
 ) {
     return std::any_of(
         constants.begin(),
         constants.end(),
-        [&](const zara::analysis::ConstantValue& constant) {
+        [&](const rothalyx::analysis::ConstantValue& constant) {
             return std::string_view(constant.name).rfind(prefix, 0) == 0 && constant.value == expected;
         }
     );
 }
 
 bool has_type_prefix(
-    const zara::type::FunctionTypes& types,
+    const rothalyx::type::FunctionTypes& types,
     const std::string_view prefix,
-    const zara::ir::ScalarType expected
+    const rothalyx::ir::ScalarType expected
 ) {
     return std::any_of(
         types.variables.begin(),
         types.variables.end(),
-        [&](const zara::type::RecoveredVariable& variable) {
+        [&](const rothalyx::type::RecoveredVariable& variable) {
             return std::string_view(variable.name).rfind(prefix, 0) == 0 && variable.type == expected;
         }
     );
@@ -52,13 +52,13 @@ bool contains_string(const std::vector<std::string>& values, const std::string_v
 }
 
 bool has_argument_location(
-    const std::vector<zara::analysis::ArgumentInfo>& arguments,
+    const std::vector<rothalyx::analysis::ArgumentInfo>& arguments,
     const std::string_view location
 ) {
     return std::any_of(
         arguments.begin(),
         arguments.end(),
-        [&](const zara::analysis::ArgumentInfo& argument) { return argument.location == location; }
+        [&](const rothalyx::analysis::ArgumentInfo& argument) { return argument.location == location; }
     );
 }
 
@@ -88,15 +88,15 @@ int main() {
         0xC3,
     };
 
-    zara::memory::AddressSpace address_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace address_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "analysis-engine.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -104,7 +104,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".idata",
                 .virtual_address = kImportBase,
                 .bytes = std::vector<std::byte>(8, std::byte{0}),
@@ -114,7 +114,7 @@ int main() {
             },
         },
         {
-            zara::loader::ImportedSymbol{
+            rothalyx::loader::ImportedSymbol{
                 .library = "libc.so.6",
                 .name = "puts",
                 .address = kImportBase,
@@ -127,11 +127,11 @@ int main() {
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto function_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
     );
     if (function_it == analysis.functions.end()) {
         std::cerr << "failed to recover analysis target function\n";
@@ -157,15 +157,15 @@ int main() {
     const auto local_it = std::find_if(
         summary.locals.begin(),
         summary.locals.end(),
-        [](const zara::analysis::LocalVariable& local) { return local.stack_offset == -8; }
+        [](const rothalyx::analysis::LocalVariable& local) { return local.stack_offset == -8; }
     );
     if (local_it == summary.locals.end()) {
         std::cerr << "local variable recovery missed [rbp-8]\n";
         return 6;
     }
 
-    if (!has_type_prefix(function_it->recovered_types, "rdi.", zara::ir::ScalarType::Pointer) ||
-        !has_type_prefix(function_it->recovered_types, "flags_", zara::ir::ScalarType::Bool)) {
+    if (!has_type_prefix(function_it->recovered_types, "rdi.", rothalyx::ir::ScalarType::Pointer) ||
+        !has_type_prefix(function_it->recovered_types, "flags_", rothalyx::ir::ScalarType::Bool)) {
         std::cerr << "type inference / typed IR propagation is incomplete\n";
         return 7;
     }
@@ -175,7 +175,7 @@ int main() {
         return 8;
     }
 
-    if (summary.calling_convention != zara::analysis::CallingConvention::SysVAMD64 ||
+    if (summary.calling_convention != rothalyx::analysis::CallingConvention::SysVAMD64 ||
         summary.arguments.empty() ||
         !has_argument_location(summary.arguments, "rdi")) {
         std::cerr << "calling convention / argument inference failed\n";
@@ -184,7 +184,7 @@ int main() {
 
     if (!summary.return_value.has_value() ||
         summary.return_value->location != "rax" ||
-        summary.return_value->type != zara::ir::ScalarType::I32) {
+        summary.return_value->type != rothalyx::ir::ScalarType::I32) {
         std::cerr << "return inference failed\n";
         return 10;
     }
@@ -192,7 +192,7 @@ int main() {
     const auto indirect_it = std::find_if(
         summary.indirect_resolutions.begin(),
         summary.indirect_resolutions.end(),
-        [](const zara::analysis::IndirectResolution& resolution) {
+        [](const rothalyx::analysis::IndirectResolution& resolution) {
             return resolution.label == "libc.so.6!puts";
         }
     );

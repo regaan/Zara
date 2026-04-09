@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "zara/plugins/manager.hpp"
+#include "rothalyx/plugins/manager.hpp"
 
 namespace {
 
@@ -25,21 +25,21 @@ std::optional<std::string> read_text_file(const std::filesystem::path& path) {
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "usage: zara_plugin_smoke <plugins-dir> <binary>\n";
+        std::cerr << "usage: rothalyx_plugin_smoke <plugins-dir> <binary>\n";
         return 1;
     }
 
     const std::filesystem::path plugins_dir = std::filesystem::absolute(argv[1]);
     const std::filesystem::path binary_path = std::filesystem::absolute(argv[2]);
-    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "zara_plugin_smoke.txt";
+    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "rothalyx_plugin_smoke.txt";
     std::filesystem::remove(output_path);
 
-    if (setenv("ZARA_PLUGIN_OUT", output_path.string().c_str(), 1) != 0) {
+    if (setenv("ROTHALYX_PLUGIN_OUT", output_path.string().c_str(), 1) != 0) {
         std::cerr << "failed to set plugin output environment variable\n";
         return 2;
     }
 
-    zara::plugins::PluginManager manager;
+    rothalyx::plugins::PluginManager manager;
     if (!manager.is_available()) {
         std::cerr << "plugin manager is unavailable\n";
         return 3;

@@ -4,12 +4,12 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 int main() {
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".text",
                 .base_address = 0x1000,
                 .bytes = {std::byte{0x90}, std::byte{0xC3}},
@@ -17,7 +17,7 @@ int main() {
             }
         ) ||
         !address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".data",
                 .base_address = 0x2000,
                 .bytes = {std::byte{0x00}, std::byte{0x01}, std::byte{0x02}, std::byte{0x03}},
@@ -77,15 +77,15 @@ int main() {
         return 9;
     }
 
-    zara::memory::AddressSpace image_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace image_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "synthetic.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         0x400000,
         0x401000,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = 0x401000,
                 .file_offset = 0,
@@ -94,7 +94,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".idata",
                 .virtual_address = 0x403000,
                 .file_offset = 2,
@@ -105,14 +105,14 @@ int main() {
             },
         },
         {
-            zara::loader::ImportedSymbol{
+            rothalyx::loader::ImportedSymbol{
                 .library = "libc.so.6",
                 .name = "puts",
                 .address = 0x403000,
             },
         },
         {
-            zara::loader::ExportedSymbol{
+            rothalyx::loader::ExportedSymbol{
                 .name = "entry",
                 .address = 0x401000,
                 .size = 2,
@@ -126,7 +126,7 @@ int main() {
     }
 
     const auto entry = image_space.resolve_symbol("entry");
-    if (!entry.has_value() || entry->address != 0x401000 || entry->kind != zara::memory::SymbolKind::Export) {
+    if (!entry.has_value() || entry->address != 0x401000 || entry->kind != rothalyx::memory::SymbolKind::Export) {
         std::cerr << "failed to resolve export symbol\n";
         return 11;
     }
@@ -134,7 +134,7 @@ int main() {
     const auto qualified_import = image_space.resolve_symbol("libc.so.6!puts");
     if (!qualified_import.has_value() ||
         qualified_import->address != 0x403000 ||
-        qualified_import->kind != zara::memory::SymbolKind::Import) {
+        qualified_import->kind != rothalyx::memory::SymbolKind::Import) {
         std::cerr << "failed to resolve qualified import symbol\n";
         return 12;
     }
@@ -152,11 +152,11 @@ int main() {
     }
 
     if (!image_space.add_symbol(
-            zara::memory::Symbol{
+            rothalyx::memory::Symbol{
                 .name = "renamed_entry",
                 .address = 0x401000,
                 .size = 2,
-                .kind = zara::memory::SymbolKind::User,
+                .kind = rothalyx::memory::SymbolKind::User,
             }
         )) {
         std::cerr << "failed to add user symbol override\n";

@@ -1,6 +1,6 @@
 {
-  "name": "zara-re-platform",
-  "version-string": "1.0.1",
+  "name": "rothalyx-re-framework",
+  "version-string": "1.0.3",
   "license": "AGPL-3.0-or-later",
   "dependencies": [
     "capstone",

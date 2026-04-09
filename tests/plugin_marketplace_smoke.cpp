@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "zara/plugins/manager.hpp"
+#include "rothalyx/plugins/manager.hpp"
 
 namespace {
 
@@ -26,24 +26,24 @@ std::optional<std::string> read_text_file(const std::filesystem::path& path) {
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "usage: zara_plugin_marketplace_smoke <marketplace-root> <binary>\n";
+        std::cerr << "usage: rothalyx_plugin_marketplace_smoke <marketplace-root> <binary>\n";
         return 1;
     }
 
     const std::filesystem::path marketplace_root = std::filesystem::absolute(argv[1]);
     const std::filesystem::path binary_path = std::filesystem::absolute(argv[2]);
-    const std::filesystem::path install_root = std::filesystem::temp_directory_path() / "zara_marketplace_plugins";
-    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "zara_marketplace_plugin.txt";
+    const std::filesystem::path install_root = std::filesystem::temp_directory_path() / "rothalyx_marketplace_plugins";
+    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "rothalyx_marketplace_plugin.txt";
     std::filesystem::remove_all(install_root);
     std::filesystem::remove(output_path);
 
-    if (setenv("ZARA_PLUGIN_OUT", output_path.string().c_str(), 1) != 0) {
+    if (setenv("ROTHALYX_PLUGIN_OUT", output_path.string().c_str(), 1) != 0) {
         std::cerr << "failed to set plugin output environment variable\n";
         return 2;
     }
 
-    zara::plugins::PluginManager manager;
-    std::vector<zara::plugins::MarketplacePlugin> marketplace_plugins;
+    rothalyx::plugins::PluginManager manager;
+    std::vector<rothalyx::plugins::MarketplacePlugin> marketplace_plugins;
     std::string error;
     if (!manager.discover_marketplace(marketplace_root, marketplace_plugins, error)) {
         std::cerr << "discover_marketplace failed: " << error << '\n';

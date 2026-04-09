@@ -1,4 +1,4 @@
-#include "zara/analysis/program_analysis.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
 
 #include <algorithm>
 #include <array>
@@ -21,9 +21,9 @@
 #include <unordered_set>
 #include <utility>
 
-#include "zara/disasm/disassembler.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
 
-namespace zara::analysis {
+namespace rothalyx::analysis {
 
 namespace {
 
@@ -3521,4 +3521,4 @@ std::string_view to_string(const CallingConvention convention) noexcept {
     }
 }
 
-}  // namespace zara::analysis
+}  // namespace rothalyx::analysis

@@ -1,6 +1,6 @@
 # Architecture
 
-Zara is organized as a layered native reverse engineering system. The intent is simple: the same core should power the desktop app, the CLI, the SDK, and automation surfaces.
+Rothalyx is organized as a layered native reverse engineering system. The intent is simple: the same core should power the desktop app, the CLI, the SDK, and automation surfaces.
 
 ## Analysis Pipeline
 

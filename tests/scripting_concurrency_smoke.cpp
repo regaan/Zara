@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include "zara/scripting/python_engine.hpp"
+#include "rothalyx/scripting/python_engine.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -24,17 +24,17 @@ int main(int argc, char** argv) {
     for (std::size_t index = 0; index < kThreadCount; ++index) {
         threads.emplace_back(
             [&, index]() {
-                zara::scripting::PythonEngine engine;
+                rothalyx::scripting::PythonEngine engine;
                 if (!engine.is_available()) {
                     return;
                 }
 
                 std::string error;
                 const std::string script =
-                    "import zara\n"
-                    "summary = zara.analyze_binary(r'" + fixture.string() + "')\n"
+                    "import rothalyx\n"
+                    "summary = rothalyx.analyze_binary(r'" + fixture.string() + "')\n"
                     "assert summary['function_count'] >= 1\n"
-                    "functions = zara.list_functions(r'" + fixture.string() + "')\n"
+                    "functions = rothalyx.list_functions(r'" + fixture.string() + "')\n"
                     "assert len(functions) >= 1\n";
                 if (!engine.execute_string(script, error)) {
                     std::lock_guard lock(error_mutex);

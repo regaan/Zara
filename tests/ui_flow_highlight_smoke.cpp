@@ -16,13 +16,13 @@
 #include <vector>
 
 #define private public
-#include "zara/desktop_qt/ui/main_window.hpp"
+#include "rothalyx/desktop_qt/ui/main_window.hpp"
 #undef private
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
     constexpr std::uint64_t kTextBase = 0x1000;
     const std::filesystem::path database_path =
-        std::filesystem::temp_directory_path() / "zara_ui_flow_highlight.sqlite";
+        std::filesystem::temp_directory_path() / "rothalyx_ui_flow_highlight.sqlite";
     std::filesystem::remove(database_path);
 
     const std::vector<std::uint8_t> code_bytes{
@@ -61,14 +61,14 @@ int main(int argc, char** argv) {
         0xC3,
     };
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "ui-flow-highlight.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -79,26 +79,26 @@ int main(int argc, char** argv) {
         }
     );
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map synthetic UI highlight image\n";
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.size() < 2) {
         std::cerr << "expected at least two functions in synthetic UI highlight image\n";
         return 2;
     }
 
-    zara::database::ProjectStore store(database_path);
+    rothalyx::database::ProjectStore store(database_path);
     std::string error;
     if (!store.save_program_analysis(image, analysis, error)) {
         std::cerr << "save_program_analysis failed: " << error << '\n';
         return 3;
     }
 
-    zara::desktop_qt::ui::MainWindow window;
+    rothalyx::desktop_qt::ui::MainWindow window;
     if (!window.load_project(database_path, false)) {
         std::cerr << "load_project failed\n";
         return 4;

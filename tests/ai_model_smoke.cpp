@@ -6,36 +6,36 @@
 #include <string>
 #include <vector>
 
-#include "zara/ai/assistant.hpp"
+#include "rothalyx/ai/assistant.hpp"
 
 namespace {
 
-class FakeModelTransport final : public zara::ai::ModelTransport {
+class FakeModelTransport final : public rothalyx::ai::ModelTransport {
 public:
     [[nodiscard]] bool create_response(
         const std::string&,
-        const zara::ai::AssistantOptions& options,
+        const rothalyx::ai::AssistantOptions& options,
         std::string& out_response_json,
         std::string& out_error
     ) override {
         out_error.clear();
         switch (options.backend) {
-        case zara::ai::AssistantBackend::Anthropic:
+        case rothalyx::ai::AssistantBackend::Anthropic:
             out_response_json =
                 R"({"content":[{"type":"text","text":"{\"functions\":[{\"entry_address\":\"0x2000\",\"suggested_name\":\"claude_auth_gate\",\"summary\":\"Anthropic-backed summary.\",\"hints\":[\"Anthropic hint.\"],\"patterns\":[{\"category\":\"comparison\",\"label\":\"anthropic authentication gate\",\"confidence\":\"high\",\"detail\":\"Anthropic detected validation logic.\"}],\"vulnerability_hints\":[{\"severity\":\"medium\",\"title\":\"Anthropic format-string exposure\",\"detail\":\"Review user-controlled formatting.\"}]}]}"}]})";
             break;
-        case zara::ai::AssistantBackend::Gemini:
+        case rothalyx::ai::AssistantBackend::Gemini:
             out_response_json =
                 R"({"candidates":[{"content":{"parts":[{"text":"{\"functions\":[{\"entry_address\":\"0x2000\",\"suggested_name\":\"gemini_auth_gate\",\"summary\":\"Gemini-backed summary.\",\"hints\":[\"Gemini hint.\"],\"patterns\":[{\"category\":\"comparison\",\"label\":\"gemini authentication gate\",\"confidence\":\"high\",\"detail\":\"Gemini detected validation logic.\"}],\"vulnerability_hints\":[{\"severity\":\"medium\",\"title\":\"Gemini format-string exposure\",\"detail\":\"Review user-controlled formatting.\"}]}]}"}]}}]})";
             break;
-        case zara::ai::AssistantBackend::OpenAICompatible:
-        case zara::ai::AssistantBackend::LocalLLM:
+        case rothalyx::ai::AssistantBackend::OpenAICompatible:
+        case rothalyx::ai::AssistantBackend::LocalLLM:
             out_response_json =
                 R"({"choices":[{"message":{"content":"{\"functions\":[{\"entry_address\":\"0x2000\",\"suggested_name\":\"compatible_auth_gate\",\"summary\":\"Compatible model summary.\",\"hints\":[\"Compatible hint.\"],\"patterns\":[{\"category\":\"comparison\",\"label\":\"compatible authentication gate\",\"confidence\":\"high\",\"detail\":\"Compatible model detected validation logic.\"}],\"vulnerability_hints\":[{\"severity\":\"medium\",\"title\":\"Compatible format-string exposure\",\"detail\":\"Review user-controlled formatting.\"}]}]}"}}]})";
             break;
-        case zara::ai::AssistantBackend::OpenAI:
-        case zara::ai::AssistantBackend::Auto:
-        case zara::ai::AssistantBackend::Heuristic:
+        case rothalyx::ai::AssistantBackend::OpenAI:
+        case rothalyx::ai::AssistantBackend::Auto:
+        case rothalyx::ai::AssistantBackend::Heuristic:
         default:
             out_response_json =
                 R"({"output_text":"{\"functions\":[{\"entry_address\":\"0x2000\",\"suggested_name\":\"auth_gate\",\"summary\":\"Validates a credential-like input before allowing execution.\",\"hints\":[\"Compares strings that look like credential material.\"],\"patterns\":[{\"category\":\"comparison\",\"label\":\"authentication gate\",\"confidence\":\"high\",\"detail\":\"String comparison imports and password-like strings indicate validation logic.\"}],\"vulnerability_hints\":[{\"severity\":\"medium\",\"title\":\"Format-string exposure\",\"detail\":\"User-controlled formatting path should be reviewed.\"}]}]}"})";
@@ -45,12 +45,12 @@ public:
     }
 };
 
-zara::disasm::Instruction make_instruction(
+rothalyx::disasm::Instruction make_instruction(
     const std::uint64_t address,
     const std::string& mnemonic,
-    const zara::disasm::InstructionKind kind = zara::disasm::InstructionKind::Instruction
+    const rothalyx::disasm::InstructionKind kind = rothalyx::disasm::InstructionKind::Instruction
 ) {
-    return zara::disasm::Instruction{
+    return rothalyx::disasm::Instruction{
         .address = address,
         .size = 1,
         .kind = kind,
@@ -63,16 +63,16 @@ zara::disasm::Instruction make_instruction(
     };
 }
 
-zara::analysis::DiscoveredFunction make_function(
+rothalyx::analysis::DiscoveredFunction make_function(
     const std::string& name,
     const std::uint64_t entry,
-    std::vector<zara::disasm::Instruction> instructions
+    std::vector<rothalyx::disasm::Instruction> instructions
 ) {
-    return zara::analysis::DiscoveredFunction{
+    return rothalyx::analysis::DiscoveredFunction{
         .name = name,
         .section_name = ".text",
         .entry_address = entry,
-        .graph = zara::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
+        .graph = rothalyx::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
         .lifted_ir = {},
         .ssa_form = {},
         .recovered_types = {},
@@ -85,44 +85,44 @@ zara::analysis::DiscoveredFunction make_function(
 }  // namespace
 
 int main() {
-    zara::analysis::ProgramAnalysis program{
+    rothalyx::analysis::ProgramAnalysis program{
         .functions =
             {
                 make_function(
                     "sub_00001000",
                     0x1000,
                     {
-                        make_instruction(0x1000, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x1001, "ret", zara::disasm::InstructionKind::Return),
+                        make_instruction(0x1000, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x1001, "ret", rothalyx::disasm::InstructionKind::Return),
                     }
                 ),
                 make_function(
                     "sub_00002000",
                     0x2000,
                     {
-                        make_instruction(0x2000, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x2001, "call", zara::disasm::InstructionKind::Call),
-                        make_instruction(0x2002, "ret", zara::disasm::InstructionKind::Return),
+                        make_instruction(0x2000, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x2001, "call", rothalyx::disasm::InstructionKind::Call),
+                        make_instruction(0x2002, "ret", rothalyx::disasm::InstructionKind::Return),
                     }
                 ),
             },
         .call_graph =
             {
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x1000,
                     .call_site = 0x1000,
                     .callee_entry = std::nullopt,
                     .callee_name = "libc.so.6!__libc_start_main",
                     .is_import = true,
                 },
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x2000,
                     .call_site = 0x2000,
                     .callee_entry = std::nullopt,
                     .callee_name = "strlen",
                     .is_import = true,
                 },
-                zara::analysis::CallGraphEdge{
+                rothalyx::analysis::CallGraphEdge{
                     .caller_entry = 0x2000,
                     .call_site = 0x2001,
                     .callee_entry = std::nullopt,
@@ -133,8 +133,8 @@ int main() {
         .strings = {},
         .xrefs =
             {
-                zara::xrefs::CrossReference{
-                    .kind = zara::xrefs::CrossReferenceKind::String,
+                rothalyx::xrefs::CrossReference{
+                    .kind = rothalyx::xrefs::CrossReferenceKind::String,
                     .from_address = 0x2000,
                     .to_address = 0x3000,
                     .label = "password check",
@@ -145,9 +145,9 @@ int main() {
         .internal_state = {},
     };
 
-    zara::ai::AssistantOptions options;
-    options.backend = zara::ai::AssistantBackend::OpenAI;
-    options.openai = zara::ai::OpenAIOptions{
+    rothalyx::ai::AssistantOptions options;
+    options.backend = rothalyx::ai::AssistantBackend::OpenAI;
+    options.openai = rothalyx::ai::OpenAIOptions{
         .api_key = "test-key",
         .model = "gpt-5-mini",
         .base_url = "https://example.invalid/v1/responses",
@@ -158,8 +158,8 @@ int main() {
     };
 
     FakeModelTransport transport;
-    zara::ai::AssistantRunMetadata metadata;
-    const auto insights = zara::ai::Assistant::analyze_program(program, 0x1000, options, &metadata, &transport);
+    rothalyx::ai::AssistantRunMetadata metadata;
+    const auto insights = rothalyx::ai::Assistant::analyze_program(program, 0x1000, options, &metadata, &transport);
     if (insights.size() != 2) {
         std::cerr << "expected 2 insights, got " << insights.size() << '\n';
         return 1;
@@ -177,7 +177,7 @@ int main() {
     const auto entry_it = std::find_if(
         insights.begin(),
         insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x1000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x1000; }
     );
     if (entry_it == insights.end() || entry_it->suggested_name != "entry_startup") {
         std::cerr << "expected heuristic fallback for entry point\n";
@@ -187,7 +187,7 @@ int main() {
     const auto compare_it = std::find_if(
         insights.begin(),
         insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
     );
     if (compare_it == insights.end()) {
         std::cerr << "missing modeled function insight\n";
@@ -211,19 +211,19 @@ int main() {
         return 7;
     }
 
-    if (setenv("ZARA_AI_BACKEND", "openai", 1) != 0 || setenv("ZARA_OPENAI_API_KEY", "env-secret", 1) != 0) {
+    if (setenv("ROTHALYX_AI_BACKEND", "openai", 1) != 0 || setenv("ROTHALYX_OPENAI_API_KEY", "env-secret", 1) != 0) {
         std::cerr << "failed to configure AI environment\n";
         return 9;
     }
-    const auto env_options = zara::ai::Assistant::options_from_environment();
+    const auto env_options = rothalyx::ai::Assistant::options_from_environment();
     if (!env_options.openai.has_value() || !env_options.openai->api_key.empty()) {
         std::cerr << "expected environment-derived options to scrub the raw API key\n";
         return 10;
     }
 
-    zara::ai::AssistantOptions anthropic_options;
-    anthropic_options.backend = zara::ai::AssistantBackend::Anthropic;
-    anthropic_options.anthropic = zara::ai::AnthropicOptions{
+    rothalyx::ai::AssistantOptions anthropic_options;
+    anthropic_options.backend = rothalyx::ai::AssistantBackend::Anthropic;
+    anthropic_options.anthropic = rothalyx::ai::AnthropicOptions{
         .api_key = "anthropic-secret",
         .model = "claude-sonnet-4-20250514",
         .base_url = "https://api.anthropic.com/v1/messages",
@@ -232,53 +232,53 @@ int main() {
         .api_version = "2023-06-01",
     };
     const auto anthropic_insights =
-        zara::ai::Assistant::analyze_program(program, 0x1000, anthropic_options, nullptr, &transport);
+        rothalyx::ai::Assistant::analyze_program(program, 0x1000, anthropic_options, nullptr, &transport);
     const auto anthropic_it = std::find_if(
         anthropic_insights.begin(),
         anthropic_insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
     );
     if (anthropic_it == anthropic_insights.end() || anthropic_it->suggested_name != "claude_auth_gate") {
         std::cerr << "expected anthropic insight mapping\n";
         return 11;
     }
 
-    zara::ai::AssistantOptions gemini_options;
-    gemini_options.backend = zara::ai::AssistantBackend::Gemini;
-    gemini_options.gemini = zara::ai::GeminiOptions{
+    rothalyx::ai::AssistantOptions gemini_options;
+    gemini_options.backend = rothalyx::ai::AssistantBackend::Gemini;
+    gemini_options.gemini = rothalyx::ai::GeminiOptions{
         .api_key = "gemini-secret",
         .model = "gemini-2.5-pro",
         .base_url = "https://generativelanguage.googleapis.com/v1beta/models",
         .max_functions = 1,
         .timeout_ms = 1000,
     };
-    const auto gemini_insights = zara::ai::Assistant::analyze_program(program, 0x1000, gemini_options, nullptr, &transport);
+    const auto gemini_insights = rothalyx::ai::Assistant::analyze_program(program, 0x1000, gemini_options, nullptr, &transport);
     const auto gemini_it = std::find_if(
         gemini_insights.begin(),
         gemini_insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
     );
     if (gemini_it == gemini_insights.end() || gemini_it->suggested_name != "gemini_auth_gate") {
         std::cerr << "expected gemini insight mapping\n";
         return 12;
     }
 
-    zara::ai::AssistantOptions compatible_options;
-    compatible_options.backend = zara::ai::AssistantBackend::LocalLLM;
-    compatible_options.compatible = zara::ai::CompatibleModelOptions{
+    rothalyx::ai::AssistantOptions compatible_options;
+    compatible_options.backend = rothalyx::ai::AssistantBackend::LocalLLM;
+    compatible_options.compatible = rothalyx::ai::CompatibleModelOptions{
         .api_key = {},
         .model = "llama3.1",
         .base_url = "http://127.0.0.1:11434/v1/chat/completions",
         .max_functions = 1,
         .timeout_ms = 1000,
     };
-    zara::ai::AssistantRunMetadata compatible_metadata;
+    rothalyx::ai::AssistantRunMetadata compatible_metadata;
     const auto compatible_insights =
-        zara::ai::Assistant::analyze_program(program, 0x1000, compatible_options, &compatible_metadata, &transport);
+        rothalyx::ai::Assistant::analyze_program(program, 0x1000, compatible_options, &compatible_metadata, &transport);
     const auto compatible_it = std::find_if(
         compatible_insights.begin(),
         compatible_insights.end(),
-        [](const zara::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
+        [](const rothalyx::ai::FunctionInsight& insight) { return insight.entry_address == 0x2000; }
     );
     if (compatible_it == compatible_insights.end() || compatible_it->suggested_name != "compatible_auth_gate") {
         std::cerr << "expected compatible insight mapping\n";

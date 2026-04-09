@@ -11,7 +11,7 @@
 #include <unistd.h>
 #endif
 
-#include "zara/distributed/batch_runner.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -24,22 +24,22 @@ int main(int argc, char** argv) {
     return 0;
 #else
     const std::filesystem::path fixture = argv[1];
-    const auto output_root = std::filesystem::temp_directory_path() / "zara_distributed_protocol_abuse";
+    const auto output_root = std::filesystem::temp_directory_path() / "rothalyx_distributed_protocol_abuse";
     std::error_code remove_error;
     std::filesystem::remove_all(output_root, remove_error);
 
     const std::uint16_t port = static_cast<std::uint16_t>(43000 + (getpid() % 1000));
-    const std::string shared_secret = "zara-abuse-secret";
+    const std::string shared_secret = "rothalyx-abuse-secret";
 
-    zara::distributed::BatchResult controller_result;
+    rothalyx::distributed::BatchResult controller_result;
     std::string controller_error;
     bool controller_ok = false;
     std::thread controller(
         [&]() {
-            controller_ok = zara::distributed::BatchRunner::analyze_remote(
+            controller_ok = rothalyx::distributed::BatchRunner::analyze_remote(
                 {fixture},
                 output_root,
-                zara::distributed::RemoteOptions{
+                rothalyx::distributed::RemoteOptions{
                     .host = "127.0.0.1",
                     .port = port,
                     .expected_workers = 1,

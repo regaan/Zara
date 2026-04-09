@@ -6,8 +6,8 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/cfg/function_graph.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/cfg/function_graph.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -58,9 +58,9 @@ int main() {
     write_value<std::uint64_t>(table_bytes, 0, 0x1030);
     write_value<std::uint64_t>(table_bytes, 8, 0x1036);
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".text",
                 .base_address = kTextBase,
                 .bytes = to_bytes(text_bytes),
@@ -68,7 +68,7 @@ int main() {
             }
         ) ||
         !address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".rodata",
                 .base_address = kTableBase,
                 .bytes = table_bytes,
@@ -79,7 +79,7 @@ int main() {
         return 1;
     }
 
-    const zara::loader::Section text_section{
+    const rothalyx::loader::Section text_section{
         .name = ".text",
         .virtual_address = kTextBase,
         .bytes = to_bytes(text_bytes),
@@ -88,12 +88,12 @@ int main() {
         .executable = true,
     };
 
-    const auto loop_graph = zara::cfg::FunctionGraph::analyze(
+    const auto loop_graph = rothalyx::cfg::FunctionGraph::analyze(
         "loop_fn",
         address_space,
         text_section,
         0x1002,
-        zara::loader::Architecture::X86_64
+        rothalyx::loader::Architecture::X86_64
     );
     if (loop_graph.loops().empty()) {
         std::cerr << "expected natural loop detection\n";
@@ -111,12 +111,12 @@ int main() {
         return 4;
     }
 
-    const auto switch_graph = zara::cfg::FunctionGraph::analyze(
+    const auto switch_graph = rothalyx::cfg::FunctionGraph::analyze(
         "switch_fn",
         address_space,
         text_section,
         0x1020,
-        zara::loader::Architecture::X86_64
+        rothalyx::loader::Architecture::X86_64
     );
     if (switch_graph.switches().size() != 1) {
         std::cerr << "expected one recovered switch\n";
@@ -147,7 +147,7 @@ int main() {
     const auto dispatch_block = std::find_if(
         switch_graph.blocks().begin(),
         switch_graph.blocks().end(),
-        [](const zara::cfg::BasicBlock& block) { return block.start_address == 0x1025; }
+        [](const rothalyx::cfg::BasicBlock& block) { return block.start_address == 0x1025; }
     );
     if (dispatch_block == switch_graph.blocks().end()) {
         std::cerr << "failed to find switch dispatch block\n";

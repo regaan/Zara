@@ -3,14 +3,14 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${1:-$repo_root/build/asan-fuzz}"
-corpus_root="${2:-/tmp/zara-fuzz-corpus}"
-output_root="${3:-/tmp/zara-fuzz-out}"
-loader_repeat="${ZARA_FUZZ_REPEAT_LOADER:-25}"
-trace_repeat="${ZARA_FUZZ_REPEAT_TRACE:-50}"
-prepare_corpus="${ZARA_FUZZ_PREPARE_CORPUS:-1}"
+corpus_root="${2:-/tmp/rothalyx-fuzz-corpus}"
+output_root="${3:-/tmp/rothalyx-fuzz-out}"
+loader_repeat="${ROTHALYX_FUZZ_REPEAT_LOADER:-25}"
+trace_repeat="${ROTHALYX_FUZZ_REPEAT_TRACE:-50}"
+prepare_corpus="${ROTHALYX_FUZZ_PREPARE_CORPUS:-1}"
 
-loader_runner="$build_dir/fuzz/zara_loader_corpus_runner"
-trace_runner="$build_dir/fuzz/zara_trace_corpus_runner"
+loader_runner="$build_dir/fuzz/rothalyx_loader_corpus_runner"
+trace_runner="$build_dir/fuzz/rothalyx_trace_corpus_runner"
 
 if [[ "$prepare_corpus" != "0" ]]; then
     "$repo_root/fuzz/prepare_corpus.sh" "$corpus_root"
@@ -30,7 +30,7 @@ timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 log_path="$output_root/campaign-$timestamp.log"
 
 {
-    echo "Zara sustained sanitizer campaign"
+    echo "Rothalyx sustained sanitizer campaign"
     echo "  build: $build_dir"
     echo "  corpus: $corpus_root"
     echo "  output: $output_root"

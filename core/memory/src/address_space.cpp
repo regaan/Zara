@@ -1,9 +1,9 @@
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 #include <algorithm>
 #include <utility>
 
-namespace zara::memory {
+namespace rothalyx::memory {
 
 namespace {
 
@@ -330,4 +330,4 @@ std::string_view to_string(const SymbolKind kind) noexcept {
     }
 }
 
-}  // namespace zara::memory
+}  // namespace rothalyx::memory

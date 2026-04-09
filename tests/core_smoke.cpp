@@ -5,14 +5,14 @@
 #include <optional>
 #include <string>
 
-#include "zara/disasm/disassembler.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
-const zara::loader::Section* choose_decode_section(
-    const zara::loader::BinaryImage& image,
+const rothalyx::loader::Section* choose_decode_section(
+    const rothalyx::loader::BinaryImage& image,
     const std::optional<std::uint64_t> preferred_address
 ) {
     if (preferred_address.has_value()) {
@@ -41,18 +41,18 @@ const zara::loader::Section* choose_decode_section(
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_core_smoke <binary>\n";
+        std::cerr << "usage: rothalyx_core_smoke <binary>\n";
         return 1;
     }
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(std::filesystem::path(argv[1]), image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(std::filesystem::path(argv[1]), image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 2;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "address space map failed\n";
         return 3;
@@ -79,15 +79,15 @@ int main(int argc, char** argv) {
         )
     );
 
-    zara::disasm::Disassembler disassembler;
+    rothalyx::disasm::Disassembler disassembler;
     const auto instructions = disassembler.decode(address_space, start_address, decode_length, image.architecture());
     if (instructions.empty()) {
         std::cerr << "no instructions decoded\n";
         return 5;
     }
 
-    if (image.format() == zara::loader::BinaryFormat::ELF) {
-        if (image.architecture() != zara::loader::Architecture::X86_64) {
+    if (image.format() == rothalyx::loader::BinaryFormat::ELF) {
+        if (image.architecture() != rothalyx::loader::Architecture::X86_64) {
             std::cerr << "unexpected architecture for ELF test target\n";
             return 6;
         }

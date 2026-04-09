@@ -5,8 +5,8 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -39,15 +39,15 @@ int main() {
         0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00,
     };
 
-    zara::memory::AddressSpace address_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace address_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "lazy-cache.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kCodeBase,
         kCodeBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kCodeBase,
                 .bytes = to_bytes(code_bytes),
@@ -55,7 +55,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".rodata",
                 .virtual_address = kDataBase,
                 .bytes = std::vector<std::byte>(
@@ -74,13 +74,13 @@ int main() {
         return 1;
     }
 
-    zara::analysis::Analyzer::clear_cache();
-    const auto stats_before = zara::analysis::Analyzer::cache_stats();
+    rothalyx::analysis::Analyzer::clear_cache();
+    const auto stats_before = rothalyx::analysis::Analyzer::cache_stats();
 
-    auto lazy_first = zara::analysis::Analyzer::analyze(
+    auto lazy_first = rothalyx::analysis::Analyzer::analyze(
         image,
         address_space,
-        zara::analysis::AnalyzeOptions{
+        rothalyx::analysis::AnalyzeOptions{
             .materialize_functions = false,
             .use_cache = true,
         }
@@ -90,21 +90,21 @@ int main() {
         return 2;
     }
 
-    const auto stats_after_first = zara::analysis::Analyzer::cache_stats();
+    const auto stats_after_first = rothalyx::analysis::Analyzer::cache_stats();
     if (stats_after_first.discovery_misses <= stats_before.discovery_misses) {
         std::cerr << "expected discovery cache miss on first lazy analysis\n";
         return 3;
     }
 
-    auto lazy_second = zara::analysis::Analyzer::analyze(
+    auto lazy_second = rothalyx::analysis::Analyzer::analyze(
         image,
         address_space,
-        zara::analysis::AnalyzeOptions{
+        rothalyx::analysis::AnalyzeOptions{
             .materialize_functions = false,
             .use_cache = true,
         }
     );
-    const auto stats_after_second = zara::analysis::Analyzer::cache_stats();
+    const auto stats_after_second = rothalyx::analysis::Analyzer::cache_stats();
     if (stats_after_second.discovery_hits <= stats_after_first.discovery_hits) {
         std::cerr << "expected discovery cache hit on second lazy analysis\n";
         return 4;
@@ -119,7 +119,7 @@ int main() {
     const auto function_it = std::find_if(
         lazy_second.functions.begin(),
         lazy_second.functions.end(),
-        [entry_address](const zara::analysis::DiscoveredFunction& function) {
+        [entry_address](const rothalyx::analysis::DiscoveredFunction& function) {
             return function.entry_address == entry_address;
         }
     );
@@ -137,17 +137,17 @@ int main() {
         return 10;
     }
 
-    const auto stats_after_materialize = zara::analysis::Analyzer::cache_stats();
+    const auto stats_after_materialize = rothalyx::analysis::Analyzer::cache_stats();
     if (stats_after_materialize.function_misses <= stats_after_second.function_misses ||
         stats_after_materialize.lazy_materializations <= stats_after_second.lazy_materializations) {
         std::cerr << "expected a cached function miss followed by lazy materialization work\n";
         return 7;
     }
 
-    auto lazy_third = zara::analysis::Analyzer::analyze(
+    auto lazy_third = rothalyx::analysis::Analyzer::analyze(
         image,
         address_space,
-        zara::analysis::AnalyzeOptions{
+        rothalyx::analysis::AnalyzeOptions{
             .materialize_functions = false,
             .use_cache = true,
         }
@@ -157,7 +157,7 @@ int main() {
         return 8;
     }
 
-    const auto stats_after_cached_materialize = zara::analysis::Analyzer::cache_stats();
+    const auto stats_after_cached_materialize = rothalyx::analysis::Analyzer::cache_stats();
     if (stats_after_cached_materialize.function_hits <= stats_after_materialize.function_hits) {
         std::cerr << "expected function cache hit on repeated lazy materialization\n";
         return 9;

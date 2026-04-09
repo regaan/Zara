@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -18,39 +18,39 @@ std::vector<std::byte> to_bytes(const std::vector<std::uint8_t>& values) {
     );
 }
 
-const zara::type::RecoveredStruct* find_struct_prefix_local(
-    const zara::type::FunctionTypes& types,
+const rothalyx::type::RecoveredStruct* find_struct_prefix_local(
+    const rothalyx::type::FunctionTypes& types,
     const std::string_view prefix
 ) {
     const auto it = std::find_if(
         types.structs.begin(),
         types.structs.end(),
-        [&](const zara::type::RecoveredStruct& recovered) {
+        [&](const rothalyx::type::RecoveredStruct& recovered) {
             return std::string_view(recovered.owner_name).rfind(prefix, 0) == 0;
         }
     );
     return it == types.structs.end() ? nullptr : &(*it);
 }
 
-const zara::type::RecoveredArray* find_array_prefix_local(
-    const zara::type::FunctionTypes& types,
+const rothalyx::type::RecoveredArray* find_array_prefix_local(
+    const rothalyx::type::FunctionTypes& types,
     const std::string_view prefix
 ) {
     const auto it = std::find_if(
         types.arrays.begin(),
         types.arrays.end(),
-        [&](const zara::type::RecoveredArray& recovered) {
+        [&](const rothalyx::type::RecoveredArray& recovered) {
             return std::string_view(recovered.owner_name).rfind(prefix, 0) == 0;
         }
     );
     return it == types.arrays.end() ? nullptr : &(*it);
 }
 
-bool has_field_offset(const zara::type::RecoveredStruct& recovered, const std::int64_t offset) {
+bool has_field_offset(const rothalyx::type::RecoveredStruct& recovered, const std::int64_t offset) {
     return std::any_of(
         recovered.fields.begin(),
         recovered.fields.end(),
-        [&](const zara::type::RecoveredStructField& field) { return field.offset == offset; }
+        [&](const rothalyx::type::RecoveredStructField& field) { return field.offset == offset; }
     );
 }
 
@@ -71,15 +71,15 @@ int main() {
         0xC3,
     };
 
-    zara::memory::AddressSpace address_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace address_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "composite-type.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -95,7 +95,7 @@ int main() {
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.empty()) {
         std::cerr << "expected at least one function\n";
         return 2;
@@ -119,16 +119,16 @@ int main() {
         std::cerr << "expected recovered array for rsi-based indexed access\n";
         return 5;
     }
-    if (recovered_array->element_size != 4 || recovered_array->element_type != zara::ir::ScalarType::I32 ||
+    if (recovered_array->element_size != 4 || recovered_array->element_type != rothalyx::ir::ScalarType::I32 ||
         !recovered_array->indexed_access) {
         std::cerr << "recovered array metadata is incomplete\n";
         return 6;
     }
 
-    const std::string decl_type = zara::type::render_decl_type(
+    const std::string decl_type = rothalyx::type::render_decl_type(
         function.recovered_types,
         recovered_struct->owner_name,
-        zara::ir::ScalarType::Pointer
+        rothalyx::ir::ScalarType::Pointer
     );
     if (decl_type.find("struct_") != 0 || decl_type.back() != '*') {
         std::cerr << "expected structured declaration type for recovered struct owner\n";

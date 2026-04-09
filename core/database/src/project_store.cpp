@@ -1,9 +1,9 @@
-#include "zara/database/project_store.hpp"
+#include "rothalyx/database/project_store.hpp"
 
-#include "zara/ai/assistant.hpp"
-#include "zara/security/workflow.hpp"
+#include "rothalyx/ai/assistant.hpp"
+#include "rothalyx/security/workflow.hpp"
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
 #include <sqlite3.h>
 #endif
 
@@ -14,11 +14,11 @@
 #include <sstream>
 #include <utility>
 
-namespace zara::database {
+namespace rothalyx::database {
 
 namespace {
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
 constexpr std::string_view kProjectSchemaVersion = "4";
 
 bool prepare_statement(sqlite3* database, const char* sql, sqlite3_stmt*& out_statement, std::string& out_error);
@@ -473,7 +473,7 @@ bool validate_schema_version(sqlite3* database, std::string& out_error) {
     if (stored_version > current_version) {
         out_error =
             "Project database schema version " + std::to_string(stored_version) +
-            " is newer than this Zara build supports.";
+            " is newer than this Rothalyx build supports.";
         return false;
     }
     return true;
@@ -488,7 +488,7 @@ ProjectStore::ProjectStore(std::filesystem::path database_path)
 bool ProjectStore::initialize(std::string& out_error) const {
     out_error.clear();
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
     sqlite3* database = nullptr;
     if (sqlite3_open(database_path_.string().c_str(), &database) != SQLITE_OK) {
         out_error = sqlite3_errmsg(database);
@@ -747,7 +747,7 @@ bool ProjectStore::initialize(std::string& out_error) const {
     if (success) {
         const bool metadata_ok =
             set_metadata_value(database, "schema_version", kProjectSchemaVersion.data(), out_error) &&
-            set_metadata_value(database, "product", "zara", out_error);
+            set_metadata_value(database, "product", "rothalyx", out_error);
         sqlite3_close(database);
         return metadata_ok;
     }
@@ -775,7 +775,7 @@ bool ProjectStore::save_program_analysis(
 ) const {
     out_error.clear();
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
     if (!initialize(out_error)) {
         return false;
     }
@@ -1271,7 +1271,7 @@ std::optional<CachedAnalysisRun>
 ProjectStore::find_cached_analysis_run(const loader::BinaryImage& image, std::string& out_error) const {
     out_error.clear();
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
     if (!initialize(out_error)) {
         return std::nullopt;
     }
@@ -1330,4 +1330,4 @@ const std::filesystem::path& ProjectStore::path() const noexcept {
     return database_path_;
 }
 
-}  // namespace zara::database
+}  // namespace rothalyx::database

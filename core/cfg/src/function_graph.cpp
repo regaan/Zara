@@ -1,4 +1,4 @@
-#include "zara/cfg/function_graph.hpp"
+#include "rothalyx/cfg/function_graph.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace zara::cfg {
+namespace rothalyx::cfg {
 
 namespace {
 
@@ -888,4 +888,4 @@ std::size_t FunctionGraph::linear_block_merges() const noexcept {
     return linear_block_merges_;
 }
 
-}  // namespace zara::cfg
+}  // namespace rothalyx::cfg

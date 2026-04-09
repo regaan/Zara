@@ -5,15 +5,15 @@
 #include <optional>
 #include <string>
 
-#include "zara/cfg/function_graph.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/xrefs/analysis.hpp"
+#include "rothalyx/cfg/function_graph.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/xrefs/analysis.hpp"
 
 namespace {
 
-const zara::loader::Section* choose_decode_section(
-    const zara::loader::BinaryImage& image,
+const rothalyx::loader::Section* choose_decode_section(
+    const rothalyx::loader::BinaryImage& image,
     const std::optional<std::uint64_t> preferred_address
 ) {
     if (preferred_address.has_value()) {
@@ -42,18 +42,18 @@ const zara::loader::Section* choose_decode_section(
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_import_smoke <binary>\n";
+        std::cerr << "usage: rothalyx_import_smoke <binary>\n";
         return 1;
     }
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(std::filesystem::path(argv[1]), image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(std::filesystem::path(argv[1]), image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 2;
     }
 
-    if (image.format() != zara::loader::BinaryFormat::ELF) {
+    if (image.format() != rothalyx::loader::BinaryFormat::ELF) {
         std::cerr << "expected ELF binary for import smoke test\n";
         return 3;
     }
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     const auto has_libc_start_main = std::any_of(
         image.imports().begin(),
         image.imports().end(),
-        [](const zara::loader::ImportedSymbol& imported) {
+        [](const rothalyx::loader::ImportedSymbol& imported) {
             return imported.name == "__libc_start_main";
         }
     );
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         return 5;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "address space map failed\n";
         return 6;
@@ -95,21 +95,21 @@ int main(int argc, char** argv) {
         }
     }
 
-    const auto graph = zara::cfg::FunctionGraph::analyze(
+    const auto graph = rothalyx::cfg::FunctionGraph::analyze(
         "entry_stub",
         address_space,
         *decode_section,
         decode_start,
         image.architecture()
     );
-    const auto strings = zara::xrefs::Analyzer::extract_strings(image);
-    const auto xrefs = zara::xrefs::Analyzer::build_cross_references(graph, strings, image.imports());
+    const auto strings = rothalyx::xrefs::Analyzer::extract_strings(image);
+    const auto xrefs = rothalyx::xrefs::Analyzer::build_cross_references(graph, strings, image.imports());
 
     const auto has_import_xref = std::any_of(
         xrefs.begin(),
         xrefs.end(),
-        [](const zara::xrefs::CrossReference& xref) {
-            return xref.kind == zara::xrefs::CrossReferenceKind::Import &&
+        [](const rothalyx::xrefs::CrossReference& xref) {
+            return xref.kind == rothalyx::xrefs::CrossReferenceKind::Import &&
                    xref.label == "__libc_start_main";
         }
     );

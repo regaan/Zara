@@ -1,4 +1,4 @@
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 #if defined(__APPLE__)
 
@@ -30,7 +30,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-namespace zara::debugger {
+namespace rothalyx::debugger {
 
 namespace {
 
@@ -971,6 +971,6 @@ std::unique_ptr<DebugSession> create_macos_debug_session() {
     return std::make_unique<MacOSDebugSession>();
 }
 
-}  // namespace zara::debugger
+}  // namespace rothalyx::debugger
 
 #endif

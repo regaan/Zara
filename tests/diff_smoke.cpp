@@ -4,28 +4,28 @@
 #include <string>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/diff/engine.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/diff/engine.hpp"
 
 namespace {
 
-zara::analysis::DiscoveredFunction make_function(
+rothalyx::analysis::DiscoveredFunction make_function(
     const std::string& name,
     const std::uint64_t entry,
     const std::vector<std::string>& mnemonics
 ) {
-    std::vector<zara::disasm::Instruction> instructions;
+    std::vector<rothalyx::disasm::Instruction> instructions;
     std::uint64_t address = entry;
     for (const auto& mnemonic : mnemonics) {
-        zara::disasm::InstructionKind kind = zara::disasm::InstructionKind::Instruction;
+        rothalyx::disasm::InstructionKind kind = rothalyx::disasm::InstructionKind::Instruction;
         if (mnemonic == "call") {
-            kind = zara::disasm::InstructionKind::Call;
+            kind = rothalyx::disasm::InstructionKind::Call;
         } else if (mnemonic == "ret") {
-            kind = zara::disasm::InstructionKind::Return;
+            kind = rothalyx::disasm::InstructionKind::Return;
         }
 
         instructions.push_back(
-            zara::disasm::Instruction{
+            rothalyx::disasm::Instruction{
                 .address = address,
                 .size = 1,
                 .kind = kind,
@@ -40,11 +40,11 @@ zara::analysis::DiscoveredFunction make_function(
         ++address;
     }
 
-    return zara::analysis::DiscoveredFunction{
+    return rothalyx::analysis::DiscoveredFunction{
         .name = name,
         .section_name = ".text",
         .entry_address = entry,
-        .graph = zara::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
+        .graph = rothalyx::cfg::FunctionGraph::from_linear(name, std::move(instructions)),
         .lifted_ir = {},
         .ssa_form = {},
         .recovered_types = {},
@@ -57,7 +57,7 @@ zara::analysis::DiscoveredFunction make_function(
 }  // namespace
 
 int main() {
-    zara::analysis::ProgramAnalysis before{
+    rothalyx::analysis::ProgramAnalysis before{
         .functions =
             {
                 make_function("foo", 0x1000, {"push", "mov", "ret"}),
@@ -72,7 +72,7 @@ int main() {
         .internal_state = {},
     };
 
-    zara::analysis::ProgramAnalysis after{
+    rothalyx::analysis::ProgramAnalysis after{
         .functions =
             {
                 make_function("foo", 0x2000, {"push", "mov", "ret"}),
@@ -87,7 +87,7 @@ int main() {
         .internal_state = {},
     };
 
-    const auto result = zara::diff::Engine::diff(before, after);
+    const auto result = rothalyx::diff::Engine::diff(before, after);
     if (result.unchanged_count != 1) {
         std::cerr << "expected one unchanged function, got " << result.unchanged_count << '\n';
         return 1;
@@ -108,8 +108,8 @@ int main() {
     const auto has_foo = std::any_of(
         result.changes.begin(),
         result.changes.end(),
-        [](const zara::diff::FunctionChange& change) {
-            return change.kind == zara::diff::ChangeKind::Unchanged &&
+        [](const rothalyx::diff::FunctionChange& change) {
+            return change.kind == rothalyx::diff::ChangeKind::Unchanged &&
                    change.old_name == "foo" &&
                    change.new_name == "foo";
         }
@@ -117,8 +117,8 @@ int main() {
     const auto has_bar = std::any_of(
         result.changes.begin(),
         result.changes.end(),
-        [](const zara::diff::FunctionChange& change) {
-            return change.kind == zara::diff::ChangeKind::Modified &&
+        [](const rothalyx::diff::FunctionChange& change) {
+            return change.kind == rothalyx::diff::ChangeKind::Modified &&
                    change.old_name == "bar" &&
                    change.new_name == "bar" &&
                    change.similarity > 0.5;
@@ -127,16 +127,16 @@ int main() {
     const auto has_baz = std::any_of(
         result.changes.begin(),
         result.changes.end(),
-        [](const zara::diff::FunctionChange& change) {
-            return change.kind == zara::diff::ChangeKind::Added &&
+        [](const rothalyx::diff::FunctionChange& change) {
+            return change.kind == rothalyx::diff::ChangeKind::Added &&
                    change.new_name == "baz";
         }
     );
     const auto has_qux = std::any_of(
         result.changes.begin(),
         result.changes.end(),
-        [](const zara::diff::FunctionChange& change) {
-            return change.kind == zara::diff::ChangeKind::Removed &&
+        [](const rothalyx::diff::FunctionChange& change) {
+            return change.kind == rothalyx::diff::ChangeKind::Removed &&
                    change.old_name == "qux";
         }
     );

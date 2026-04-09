@@ -1,6 +1,6 @@
 # AI Integration
 
-Zara treats AI as an optional analysis layer. The reverse engineering pipeline still runs without a hosted model, and the desktop app can remain in heuristic-only mode.
+Rothalyx treats AI as an optional analysis layer. The reverse engineering pipeline still runs without a hosted model, and the desktop app can remain in heuristic-only mode.
 
 ## Desktop Settings Flow
 
@@ -36,7 +36,7 @@ Secrets are stored separately through the host operating system:
 - macOS: Keychain
 - Linux: Secret Service through `secret-tool`
 
-If secure storage is unavailable, Zara does not silently save keys in plain-text app settings. Users can still rely on environment variables or install the required host keyring tooling.
+If secure storage is unavailable, Rothalyx does not silently save keys in plain-text app settings. Users can still rely on environment variables or install the required host keyring tooling.
 
 ## Provider Mapping
 
@@ -51,7 +51,7 @@ The current provider mapping is:
 - OpenAI-compatible and local LLM  
   chat-completions style endpoints
 
-Inside Zara, provider responses are normalized into a single internal insight shape:
+Inside Rothalyx, provider responses are normalized into a single internal insight shape:
 
 - suggested function name
 - short summary
@@ -67,14 +67,14 @@ The model-backed flow is:
 2. choose a bounded set of candidate functions
 3. build a compact function-context payload
 4. submit the request to the selected provider
-5. normalize the provider response into Zara insight records
+5. normalize the provider response into Rothalyx insight records
 6. persist those results with the analysis run
 
-The parser is deliberately conservative. If a provider response is malformed or unusable, Zara falls back to the existing heuristic path instead of blocking analysis.
+The parser is deliberately conservative. If a provider response is malformed or unusable, Rothalyx falls back to the existing heuristic path instead of blocking analysis.
 
 ## Cost and Rate Limits
 
-Hosted provider billing stays with the user’s own key or account. Zara controls request size rather than provider-side pricing.
+Hosted provider billing stays with the user’s own key or account. Rothalyx controls request size rather than provider-side pricing.
 
 The desktop flow currently limits:
 

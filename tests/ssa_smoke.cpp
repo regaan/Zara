@@ -2,22 +2,22 @@
 #include <cstdint>
 #include <iostream>
 
-#include "zara/ssa/builder.hpp"
+#include "rothalyx/ssa/builder.hpp"
 
 namespace {
 
-zara::ir::Value reg(const char* name) {
-    return zara::ir::Value{
-        .kind = zara::ir::ValueKind::Register,
-        .type = zara::ir::ScalarType::I32,
+rothalyx::ir::Value reg(const char* name) {
+    return rothalyx::ir::Value{
+        .kind = rothalyx::ir::ValueKind::Register,
+        .type = rothalyx::ir::ScalarType::I32,
         .name = name,
     };
 }
 
-zara::ir::Value imm(const std::int64_t value) {
-    return zara::ir::Value{
-        .kind = zara::ir::ValueKind::Immediate,
-        .type = zara::ir::ScalarType::I32,
+rothalyx::ir::Value imm(const std::int64_t value) {
+    return rothalyx::ir::Value{
+        .kind = rothalyx::ir::ValueKind::Immediate,
+        .type = rothalyx::ir::ScalarType::I32,
         .immediate = value,
     };
 }
@@ -25,24 +25,24 @@ zara::ir::Value imm(const std::int64_t value) {
 }  // namespace
 
 int main() {
-    const zara::ir::Function function{
+    const rothalyx::ir::Function function{
         .name = "ssa_fixture",
         .entry_address = 0x1000,
         .blocks =
             {
-                zara::ir::BasicBlock{
+                rothalyx::ir::BasicBlock{
                     .start_address = 0x1000,
                     .instructions =
                         {
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1000,
-                                .kind = zara::ir::InstructionKind::Assign,
+                                .kind = rothalyx::ir::InstructionKind::Assign,
                                 .destination = reg("eax"),
                                 .inputs = {imm(1)},
                             },
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1004,
-                                .kind = zara::ir::InstructionKind::CondBranch,
+                                .kind = rothalyx::ir::InstructionKind::CondBranch,
                                 .inputs = {reg("eax")},
                                 .true_target = 0x1010,
                                 .false_target = 0x1020,
@@ -51,57 +51,57 @@ int main() {
                         },
                     .successors = {0x1010, 0x1020},
                 },
-                zara::ir::BasicBlock{
+                rothalyx::ir::BasicBlock{
                     .start_address = 0x1010,
                     .instructions =
                         {
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1010,
-                                .kind = zara::ir::InstructionKind::Assign,
+                                .kind = rothalyx::ir::InstructionKind::Assign,
                                 .destination = reg("eax"),
                                 .inputs = {imm(2)},
                             },
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1014,
-                                .kind = zara::ir::InstructionKind::Branch,
+                                .kind = rothalyx::ir::InstructionKind::Branch,
                                 .true_target = 0x1030,
                                 .text = "jmp",
                             },
                         },
                     .successors = {0x1030},
                 },
-                zara::ir::BasicBlock{
+                rothalyx::ir::BasicBlock{
                     .start_address = 0x1020,
                     .instructions =
                         {
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1020,
-                                .kind = zara::ir::InstructionKind::Assign,
+                                .kind = rothalyx::ir::InstructionKind::Assign,
                                 .destination = reg("eax"),
                                 .inputs = {imm(3)},
                             },
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1024,
-                                .kind = zara::ir::InstructionKind::Branch,
+                                .kind = rothalyx::ir::InstructionKind::Branch,
                                 .true_target = 0x1030,
                                 .text = "jmp",
                             },
                         },
                     .successors = {0x1030},
                 },
-                zara::ir::BasicBlock{
+                rothalyx::ir::BasicBlock{
                     .start_address = 0x1030,
                     .instructions =
                         {
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1030,
-                                .kind = zara::ir::InstructionKind::Assign,
+                                .kind = rothalyx::ir::InstructionKind::Assign,
                                 .destination = reg("ebx"),
                                 .inputs = {reg("eax")},
                             },
-                            zara::ir::Instruction{
+                            rothalyx::ir::Instruction{
                                 .address = 0x1034,
-                                .kind = zara::ir::InstructionKind::Return,
+                                .kind = rothalyx::ir::InstructionKind::Return,
                                 .text = "ret",
                             },
                         },
@@ -110,11 +110,11 @@ int main() {
             },
     };
 
-    const auto ssa_function = zara::ssa::Builder::build(function);
+    const auto ssa_function = rothalyx::ssa::Builder::build(function);
     const auto block_it = std::find_if(
         ssa_function.blocks.begin(),
         ssa_function.blocks.end(),
-        [](const zara::ssa::BasicBlock& block) { return block.start_address == 0x1030; }
+        [](const rothalyx::ssa::BasicBlock& block) { return block.start_address == 0x1030; }
     );
     if (block_it == ssa_function.blocks.end()) {
         std::cerr << "missing join block\n";

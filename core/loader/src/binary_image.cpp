@@ -1,4 +1,4 @@
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 #include <algorithm>
 #include <array>
@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace zara::loader {
+namespace rothalyx::loader {
 
 namespace detail {
 
@@ -3248,4 +3248,4 @@ std::string_view to_string(const Architecture architecture) noexcept {
     }
 }
 
-}  // namespace zara::loader
+}  // namespace rothalyx::loader

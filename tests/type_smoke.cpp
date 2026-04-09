@@ -6,20 +6,20 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
 bool has_typed_prefix(
-    const zara::type::FunctionTypes& types,
+    const rothalyx::type::FunctionTypes& types,
     const std::string_view prefix,
-    const zara::ir::ScalarType expected_type
+    const rothalyx::ir::ScalarType expected_type
 ) {
     return std::any_of(
         types.variables.begin(),
         types.variables.end(),
-        [&](const zara::type::RecoveredVariable& variable) {
+        [&](const rothalyx::type::RecoveredVariable& variable) {
             return std::string_view(variable.name).rfind(prefix, 0) == 0 && variable.type == expected_type;
         }
     );
@@ -47,9 +47,9 @@ int main() {
         0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00,
     };
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".text",
                 .base_address = kCodeBase,
                 .bytes = std::vector<std::byte>(
@@ -57,7 +57,7 @@ int main() {
                     reinterpret_cast<const std::byte*>(code_bytes.data() + code_bytes.size())
                 ),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = true,
@@ -65,7 +65,7 @@ int main() {
             }
         ) ||
         !address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".rodata",
                 .base_address = kDataBase,
                 .bytes = std::vector<std::byte>(
@@ -73,7 +73,7 @@ int main() {
                     reinterpret_cast<const std::byte*>(data_bytes.data() + data_bytes.size())
                 ),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = false,
@@ -84,14 +84,14 @@ int main() {
         return 1;
     }
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "synthetic.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kCodeBase,
         kCodeBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kCodeBase,
                 .bytes = std::vector<std::byte>(
@@ -102,7 +102,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".rodata",
                 .virtual_address = kDataBase,
                 .bytes = std::vector<std::byte>(
@@ -116,28 +116,28 @@ int main() {
         }
     );
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto function_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
     );
     if (function_it == analysis.functions.end()) {
         std::cerr << "failed to find root function\n";
         return 2;
     }
 
-    if (!has_typed_prefix(function_it->recovered_types, "rsp.", zara::ir::ScalarType::Pointer)) {
+    if (!has_typed_prefix(function_it->recovered_types, "rsp.", rothalyx::ir::ScalarType::Pointer)) {
         std::cerr << "expected pointer type for stack pointer SSA values\n";
         return 3;
     }
 
-    if (!has_typed_prefix(function_it->recovered_types, "rdi.", zara::ir::ScalarType::Pointer)) {
+    if (!has_typed_prefix(function_it->recovered_types, "rdi.", rothalyx::ir::ScalarType::Pointer)) {
         std::cerr << "expected pointer type for LEA-derived rdi value\n";
         return 4;
     }
 
-    if (!has_typed_prefix(function_it->recovered_types, "eax.", zara::ir::ScalarType::I32)) {
+    if (!has_typed_prefix(function_it->recovered_types, "eax.", rothalyx::ir::ScalarType::I32)) {
         std::cerr << "expected i32 type for eax SSA values\n";
         return 5;
     }

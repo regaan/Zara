@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to Zara.
+Thanks for contributing to Rothalyx.
 
 This is a systems-heavy codebase. The best changes are focused, tested, and easy to review.
 

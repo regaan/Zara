@@ -5,9 +5,9 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/cfg/function_graph.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/xrefs/analysis.hpp"
+#include "rothalyx/cfg/function_graph.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/xrefs/analysis.hpp"
 
 int main() {
     constexpr std::uint64_t kCodeBase = 0x1000;
@@ -29,14 +29,14 @@ int main() {
         0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00,
     };
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".text",
                 .base_address = kCodeBase,
                 .bytes = std::vector<std::byte>(reinterpret_cast<const std::byte*>(code_bytes.data()), reinterpret_cast<const std::byte*>(code_bytes.data() + code_bytes.size())),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = true,
@@ -48,12 +48,12 @@ int main() {
     }
 
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".rodata",
                 .base_address = kDataBase,
                 .bytes = std::vector<std::byte>(reinterpret_cast<const std::byte*>(data_bytes.data()), reinterpret_cast<const std::byte*>(data_bytes.data() + data_bytes.size())),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = false,
@@ -64,7 +64,7 @@ int main() {
         return 2;
     }
 
-    const zara::loader::Section text_section{
+    const rothalyx::loader::Section text_section{
         .name = ".text",
         .virtual_address = kCodeBase,
         .bytes = std::vector<std::byte>(reinterpret_cast<const std::byte*>(code_bytes.data()), reinterpret_cast<const std::byte*>(code_bytes.data() + code_bytes.size())),
@@ -73,12 +73,12 @@ int main() {
         .executable = true,
     };
 
-    const auto graph = zara::cfg::FunctionGraph::analyze(
+    const auto graph = rothalyx::cfg::FunctionGraph::analyze(
         "synthetic_entry",
         address_space,
         text_section,
         kCodeBase,
-        zara::loader::Architecture::X86_64
+        rothalyx::loader::Architecture::X86_64
     );
 
     if (graph.blocks().size() != 3) {
@@ -91,20 +91,20 @@ int main() {
         return 4;
     }
 
-    const std::vector<zara::xrefs::ExtractedString> synthetic_strings{
-        zara::xrefs::ExtractedString{
+    const std::vector<rothalyx::xrefs::ExtractedString> synthetic_strings{
+        rothalyx::xrefs::ExtractedString{
             .start_address = kDataBase,
             .end_address = kDataBase + 5,
             .value = "hello",
         }
     };
 
-    const auto xrefs = zara::xrefs::Analyzer::build_cross_references(graph, synthetic_strings);
+    const auto xrefs = rothalyx::xrefs::Analyzer::build_cross_references(graph, synthetic_strings);
     const auto has_string_xref = std::any_of(
         xrefs.begin(),
         xrefs.end(),
-        [&](const zara::xrefs::CrossReference& xref) {
-            return xref.kind == zara::xrefs::CrossReferenceKind::String &&
+        [&](const rothalyx::xrefs::CrossReference& xref) {
+            return xref.kind == rothalyx::xrefs::CrossReferenceKind::String &&
                    xref.from_address == 0x1004 &&
                    xref.to_address == kDataBase;
         }
@@ -117,8 +117,8 @@ int main() {
     const auto has_call_xref = std::any_of(
         xrefs.begin(),
         xrefs.end(),
-        [](const zara::xrefs::CrossReference& xref) {
-            return xref.kind == zara::xrefs::CrossReferenceKind::Call &&
+        [](const rothalyx::xrefs::CrossReference& xref) {
+            return xref.kind == rothalyx::xrefs::CrossReferenceKind::Call &&
                    xref.from_address == 0x100D &&
                    xref.to_address == 0x1015;
         }
@@ -131,8 +131,8 @@ int main() {
     const auto has_jump_xref = std::any_of(
         xrefs.begin(),
         xrefs.end(),
-        [](const zara::xrefs::CrossReference& xref) {
-            return xref.kind == zara::xrefs::CrossReferenceKind::Jump &&
+        [](const rothalyx::xrefs::CrossReference& xref) {
+            return xref.kind == rothalyx::xrefs::CrossReferenceKind::Jump &&
                    xref.from_address == 0x100B &&
                    xref.to_address == 0x1012;
         }

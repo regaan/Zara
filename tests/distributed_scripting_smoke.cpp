@@ -6,11 +6,11 @@
 #include <unistd.h>
 #endif
 
-#include "zara/scripting/python_engine.hpp"
+#include "rothalyx/scripting/python_engine.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "usage: zara_distributed_scripting_smoke <binary-a> <binary-b>\n";
+        std::cerr << "usage: rothalyx_distributed_scripting_smoke <binary-a> <binary-b>\n";
         return 1;
     }
 
@@ -20,11 +20,11 @@ int main(int argc, char** argv) {
 #else
     const std::filesystem::path binary_a = std::filesystem::absolute(argv[1]);
     const std::filesystem::path binary_b = std::filesystem::absolute(argv[2]);
-    const auto temp_root = std::filesystem::temp_directory_path() / "zara_distributed_scripting_smoke";
+    const auto temp_root = std::filesystem::temp_directory_path() / "rothalyx_distributed_scripting_smoke";
     const auto input_root = temp_root / "inputs";
     const auto controller_output = temp_root / "controller";
     const auto worker_output = temp_root / "worker";
-    const std::string shared_secret = "zara-scripting-remote-secret";
+    const std::string shared_secret = "rothalyx-scripting-remote-secret";
 
     std::error_code filesystem_error;
     std::filesystem::remove_all(temp_root, filesystem_error);
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     std::filesystem::copy_file(binary_a, input_root / "fixture_a.bin", std::filesystem::copy_options::overwrite_existing, filesystem_error);
     std::filesystem::copy_file(binary_b, input_root / "fixture_b.bin", std::filesystem::copy_options::overwrite_existing, filesystem_error);
 
-    zara::scripting::PythonEngine engine;
+    rothalyx::scripting::PythonEngine engine;
     if (!engine.is_available()) {
         std::cerr << "embedded python is unavailable\n";
         return 2;
@@ -49,8 +49,8 @@ int main(int argc, char** argv) {
         "from pathlib import Path\n"
         "import threading\n"
         "import time\n"
-        "import zara\n"
-        "inputs = zara.discover_inputs(r'" + input_root.string() + "', recursive=False)\n"
+        "import rothalyx\n"
+        "inputs = rothalyx.discover_inputs(r'" + input_root.string() + "', recursive=False)\n"
         "assert len(inputs) == 2\n"
         "controller_output = Path(r'" + controller_output.string() + "')\n"
         "worker_output = Path(r'" + worker_output.string() + "')\n"
@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
         "errors = []\n"
         "def controller():\n"
         "    try:\n"
-        "        holder['result'] = zara.run_remote_batch(inputs, str(controller_output), port=" + std::to_string(port) + ", shared_secret='" + shared_secret + "', expected_workers=1, write_reports=True)\n"
+        "        holder['result'] = rothalyx.run_remote_batch(inputs, str(controller_output), port=" + std::to_string(port) + ", shared_secret='" + shared_secret + "', expected_workers=1, write_reports=True)\n"
         "    except Exception as exc:\n"
         "        errors.append(str(exc))\n"
         "thread = threading.Thread(target=controller)\n"
         "thread.start()\n"
         "time.sleep(0.2)\n"
-        "worker = zara.run_remote_worker(str(worker_output), port=" + std::to_string(port) + ", shared_secret='" + shared_secret + "')\n"
+        "worker = rothalyx.run_remote_worker(str(worker_output), port=" + std::to_string(port) + ", shared_secret='" + shared_secret + "')\n"
         "thread.join()\n"
         "assert not errors, errors\n"
         "assert holder['result']['remote'] is True\n"

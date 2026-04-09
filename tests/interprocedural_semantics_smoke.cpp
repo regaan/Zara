@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -38,14 +38,14 @@ int main() {
         0xC3,
     };
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "interprocedural.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -56,13 +56,13 @@ int main() {
         }
     );
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map interprocedural test image\n";
         return 1;
     }
 
-    auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.size() < 2) {
         std::cerr << "expected at least two discovered functions\n";
         return 2;
@@ -71,12 +71,12 @@ int main() {
     const auto caller_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
     );
     const auto callee_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x100E; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x100E; }
     );
     if (caller_it == analysis.functions.end() || callee_it == analysis.functions.end()) {
         std::cerr << "failed to resolve caller/callee pair\n";

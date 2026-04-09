@@ -1,6 +1,6 @@
 # Security Policy
 
-If you believe you have found a security issue in Zara, do not open a public issue with exploit details.
+If you believe you have found a security issue in Rothalyx, do not open a public issue with exploit details.
 
 ## Reporting
 

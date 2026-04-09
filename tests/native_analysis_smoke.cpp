@@ -1,6 +1,6 @@
-#include "zara/desktop_qt/app/analysis_runner.hpp"
-#include "zara/desktop_qt/app/workspace_controller.hpp"
-#include "zara/desktop_qt/persistence/project_repository.hpp"
+#include "rothalyx/desktop_qt/app/analysis_runner.hpp"
+#include "rothalyx/desktop_qt/app/workspace_controller.hpp"
+#include "rothalyx/desktop_qt/persistence/project_repository.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -10,18 +10,18 @@
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << "usage: zara_native_analysis_smoke <binary-path>\n";
+        std::cerr << "usage: rothalyx_native_analysis_smoke <binary-path>\n";
         return EXIT_FAILURE;
     }
 
     const std::filesystem::path binary_path(argv[1]);
     const auto unique_id = std::chrono::steady_clock::now().time_since_epoch().count();
     const std::filesystem::path project_path =
-        std::filesystem::temp_directory_path() / ("zara-native-analysis-" + std::to_string(unique_id) + ".sqlite");
+        std::filesystem::temp_directory_path() / ("rothalyx-native-analysis-" + std::to_string(unique_id) + ".sqlite");
 
-    zara::desktop_qt::app::LiveProgram program;
+    rothalyx::desktop_qt::app::LiveProgram program;
     std::string error;
-    const bool load_ok = zara::desktop_qt::app::AnalysisRunner::load_program(binary_path, program, error);
+    const bool load_ok = rothalyx::desktop_qt::app::AnalysisRunner::load_program(binary_path, program, error);
     if (!load_ok) {
         std::cerr << "lazy load failed: " << error << '\n';
         return EXIT_FAILURE;
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 
     program = {};
     error.clear();
-    const bool ok = zara::desktop_qt::app::AnalysisRunner::analyze_binary_to_project(
+    const bool ok = rothalyx::desktop_qt::app::AnalysisRunner::analyze_binary_to_project(
         binary_path,
         project_path,
         nullptr,
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    zara::desktop_qt::app::WorkspaceController controller(project_path);
+    rothalyx::desktop_qt::app::WorkspaceController controller(project_path);
     if (!controller.open(error)) {
         std::cerr << "failed to reopen persisted project: " << error << '\n';
         return EXIT_FAILURE;
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    zara::desktop_qt::persistence::ProjectRepository repository(project_path);
+    rothalyx::desktop_qt::persistence::ProjectRepository repository(project_path);
     if (!repository.open(error)) {
         std::cerr << "failed to reopen repository for cache validation: " << error << '\n';
         return EXIT_FAILURE;
@@ -83,9 +83,9 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    zara::desktop_qt::app::LiveProgram cached_program;
+    rothalyx::desktop_qt::app::LiveProgram cached_program;
     error.clear();
-    const bool cached_ok = zara::desktop_qt::app::AnalysisRunner::analyze_binary_to_project(
+    const bool cached_ok = rothalyx::desktop_qt::app::AnalysisRunner::analyze_binary_to_project(
         binary_path,
         project_path,
         nullptr,

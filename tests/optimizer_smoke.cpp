@@ -5,8 +5,8 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -18,7 +18,7 @@ std::vector<std::byte> to_bytes(const std::vector<std::uint8_t>& values) {
 }
 
 bool contains_destination_prefix(
-    const zara::ssa::Function& function,
+    const rothalyx::ssa::Function& function,
     const std::string_view prefix
 ) {
     for (const auto& block : function.blocks) {
@@ -55,15 +55,15 @@ int main() {
         0xC3,
     };
 
-    zara::memory::AddressSpace address_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace address_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "optimizer.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -74,7 +74,7 @@ int main() {
         },
         {},
         {
-            zara::loader::ExportedSymbol{
+            rothalyx::loader::ExportedSymbol{
                 .name = "opt_fn",
                 .address = kTextBase,
                 .size = static_cast<std::uint64_t>(code_bytes.size()),
@@ -87,11 +87,11 @@ int main() {
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto function_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.name == "opt_fn"; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.name == "opt_fn"; }
     );
     if (function_it == analysis.functions.end()) {
         std::cerr << "failed to recover optimizer test function\n";

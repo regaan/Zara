@@ -1,4 +1,4 @@
-#include "zara/security/workflow.hpp"
+#include "rothalyx/security/workflow.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -21,7 +21,7 @@
 #include <sys/wait.h>
 #endif
 
-namespace zara::security {
+namespace rothalyx::security {
 
 namespace {
 
@@ -1118,7 +1118,7 @@ std::vector<FuzzHarnessArtifact> build_harness_artifacts(
         << "    if (size == 0 || size > (1u << 20u)) {\n"
         << "        return 0;\n"
         << "    }\n"
-        << "    const auto path = std::filesystem::temp_directory_path() / \"zara-libfuzzer-input.bin\";\n"
+        << "    const auto path = std::filesystem::temp_directory_path() / \"rothalyx-libfuzzer-input.bin\";\n"
         << "    {\n"
         << "        std::ofstream output(path, std::ios::binary);\n"
         << "        output.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(size));\n"
@@ -1182,7 +1182,7 @@ std::vector<FuzzHarnessArtifact> build_harness_artifacts(
         << "        if (size == 0 || size > (1u << 20u) || data == nullptr) {\n"
         << "            continue;\n"
         << "        }\n"
-        << "        const auto path = std::filesystem::temp_directory_path() / \"zara-afl-input.bin\";\n"
+        << "        const auto path = std::filesystem::temp_directory_path() / \"rothalyx-afl-input.bin\";\n"
         << "        {\n"
         << "            std::ofstream output(path, std::ios::binary);\n"
         << "            output.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(size));\n"
@@ -1270,7 +1270,7 @@ std::vector<FuzzHarnessArtifact> build_harness_artifacts(
     metadata << "}\n";
 
     std::ostringstream readme;
-    readme << "Zara generated fuzz bundle\n\n";
+    readme << "Rothalyx generated fuzz bundle\n\n";
     readme << "Binary: " << binary_path << "\n";
     readme << "Crash summary: " << report.crash_summary << "\n\n";
     readme << "Artifacts\n";
@@ -1864,4 +1864,4 @@ std::string_view to_string(const Severity severity) noexcept {
     }
 }
 
-}  // namespace zara::security
+}  // namespace rothalyx::security

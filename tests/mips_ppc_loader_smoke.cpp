@@ -5,10 +5,10 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/disasm/disassembler.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -20,20 +20,20 @@ std::vector<std::byte> to_bytes(const std::vector<std::uint8_t>& values) {
 }
 
 bool verify_architecture(
-    const zara::loader::Architecture architecture,
+    const rothalyx::loader::Architecture architecture,
     const std::string_view name,
     const std::vector<std::uint8_t>& code_bytes,
     const std::string_view expected_first_mnemonic
 ) {
     constexpr std::uint64_t kTextBase = 0x1000;
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         std::string(name) + ".bin",
-        zara::loader::BinaryFormat::Raw,
+        rothalyx::loader::BinaryFormat::Raw,
         architecture,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -44,13 +44,13 @@ bool verify_architecture(
         }
     );
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map " << name << " image\n";
         return false;
     }
 
-    zara::disasm::Disassembler disassembler;
+    rothalyx::disasm::Disassembler disassembler;
     if (!disassembler.is_supported(architecture)) {
         std::cerr << "expected decode support for " << name << '\n';
         return false;
@@ -66,7 +66,7 @@ bool verify_architecture(
         return false;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.empty() || analysis.functions.front().entry_address != kTextBase) {
         std::cerr << "expected entry-driven analysis for " << name << '\n';
         return false;
@@ -91,7 +91,7 @@ int main() {
         0x08, 0x00, 0xE0, 0x03,  // jr ra
         0x00, 0x00, 0x00, 0x00,  // nop
     };
-    if (!verify_architecture(zara::loader::Architecture::MIPS64, "mips64", mips64_code, "daddiu")) {
+    if (!verify_architecture(rothalyx::loader::Architecture::MIPS64, "mips64", mips64_code, "daddiu")) {
         return 1;
     }
 
@@ -101,7 +101,7 @@ int main() {
         0x20, 0x00, 0x80, 0x4E,  // blr
         0x00, 0x00, 0x00, 0x60,  // nop
     };
-    if (!verify_architecture(zara::loader::Architecture::PPC64, "ppc64", ppc64_code, "mflr")) {
+    if (!verify_architecture(rothalyx::loader::Architecture::PPC64, "ppc64", ppc64_code, "mflr")) {
         return 2;
     }
 

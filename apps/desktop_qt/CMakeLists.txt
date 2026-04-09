@@ -5,13 +5,13 @@ if(NOT Qt6_FOUND)
     return()
 endif()
 
-if(NOT TARGET zara_sqlite_dep)
+if(NOT TARGET rothalyx_sqlite_dep)
     message(STATUS "Skipping native desktop shell: SQLite dependency was not found.")
     return()
 endif()
 
 add_executable(
-    zara_desktop_qt
+    rothalyx_desktop_qt
     src/main.cpp
     src/app/ai_settings.cpp
     src/app/analysis_runner.cpp
@@ -23,77 +23,77 @@ add_executable(
 )
 
 qt_add_resources(
-    zara_desktop_qt
+    rothalyx_desktop_qt
     desktop_qt_resources
     PREFIX
         "/"
     BASE
         ${CMAKE_CURRENT_SOURCE_DIR}/resources
     FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform.png
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework.png
 )
 
 target_include_directories(
-    zara_desktop_qt
+    rothalyx_desktop_qt
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_link_libraries(
-    zara_desktop_qt
+    rothalyx_desktop_qt
     PRIVATE
         Qt6::Widgets
-        zara_loader
-        zara_memory
-        zara_analysis
-        zara_database
-        zara_debugger
-        zara_sqlite_dep
+        rothalyx_loader
+        rothalyx_memory
+        rothalyx_analysis
+        rothalyx_database
+        rothalyx_debugger
+        rothalyx_sqlite_dep
 )
 
 if(MSVC)
-    target_compile_options(zara_desktop_qt PRIVATE /W4 /permissive-)
+    target_compile_options(rothalyx_desktop_qt PRIVATE /W4 /permissive-)
 else()
-    target_compile_options(zara_desktop_qt PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(rothalyx_desktop_qt PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 set_target_properties(
-    zara_desktop_qt
+    rothalyx_desktop_qt
     PROPERTIES
         WIN32_EXECUTABLE TRUE
         MACOSX_BUNDLE TRUE
 )
 
 if(WIN32)
-    target_link_libraries(zara_desktop_qt PRIVATE Advapi32)
+    target_link_libraries(rothalyx_desktop_qt PRIVATE Advapi32)
     target_sources(
-        zara_desktop_qt
+        rothalyx_desktop_qt
         PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara_desktop_qt.rc
+            ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx_desktop_qt.rc
     )
 endif()
 
 if(APPLE)
     target_sources(
-        zara_desktop_qt
+        rothalyx_desktop_qt
         PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform.icns
+            ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework.icns
     )
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform.icns
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework.icns
         PROPERTIES
             MACOSX_PACKAGE_LOCATION Resources
     )
     set_target_properties(
-        zara_desktop_qt
+        rothalyx_desktop_qt
         PROPERTIES
-            MACOSX_BUNDLE_ICON_FILE zara-re-platform.icns
+            MACOSX_BUNDLE_ICON_FILE rothalyx-re-framework.icns
     )
 endif()
 
 install(
     TARGETS
-        zara_desktop_qt
+        rothalyx_desktop_qt
     RUNTIME DESTINATION
         ${CMAKE_INSTALL_BINDIR}
     BUNDLE DESTINATION
@@ -102,32 +102,32 @@ install(
 
 if((WIN32 OR APPLE) AND COMMAND qt_generate_deploy_app_script)
     qt_generate_deploy_app_script(
-        TARGET zara_desktop_qt
-        OUTPUT_SCRIPT zara_desktop_qt_deploy_script
+        TARGET rothalyx_desktop_qt
+        OUTPUT_SCRIPT rothalyx_desktop_qt_deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
     )
-    install(SCRIPT ${zara_desktop_qt_deploy_script})
+    install(SCRIPT ${rothalyx_desktop_qt_deploy_script})
 endif()
 
 install(
     FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform.desktop
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework.desktop
     DESTINATION
         ${CMAKE_INSTALL_DATADIR}/applications
 )
 
 install(
     FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform-512.png
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework-512.png
     DESTINATION
         ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
     RENAME
-        zara-re-platform.png
+        rothalyx-re-framework.png
 )
 
 install(
     FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/zara-re-platform.svg
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/rothalyx-re-framework.svg
     DESTINATION
         ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )

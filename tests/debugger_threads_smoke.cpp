@@ -9,11 +9,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_debugger_threads_smoke <debuggee>\n";
+        std::cerr << "usage: rothalyx_debugger_threads_smoke <debuggee>\n";
         return 1;
     }
 
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-    const auto debugger = zara::debugger::DebugSession::create_native();
+    const auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     }
 
     std::string error;
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->attach(child, event, error)) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    std::vector<zara::debugger::ThreadInfo> threads;
+    std::vector<rothalyx::debugger::ThreadInfo> threads;
     if (!debugger->list_threads(threads, error)) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         return 8;
     }
 
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (!debugger->read_registers(registers, error)) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);

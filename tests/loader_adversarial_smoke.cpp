@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 namespace {
 
@@ -21,9 +21,9 @@ bool write_bytes(const std::filesystem::path& path, const std::vector<std::byte>
 }
 
 bool expect_load_failure(const std::filesystem::path& path, const std::string& label) {
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (zara::loader::BinaryImage::load_from_file(path, image, error)) {
+    if (rothalyx::loader::BinaryImage::load_from_file(path, image, error)) {
         std::cerr << label << " unexpectedly loaded successfully\n";
         return false;
     }
@@ -37,7 +37,7 @@ bool expect_load_failure(const std::filesystem::path& path, const std::string& l
 }  // namespace
 
 int main() {
-    const auto root = std::filesystem::temp_directory_path() / "zara_loader_adversarial";
+    const auto root = std::filesystem::temp_directory_path() / "rothalyx_loader_adversarial";
     std::error_code remove_error;
     std::filesystem::remove_all(root, remove_error);
     std::filesystem::create_directories(root, remove_error);

@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
+#include "rothalyx/loader/binary_image.hpp"
 
 namespace {
 
@@ -32,7 +32,7 @@ struct DecodeCase {
     std::size_t import_index = 0;
     std::uint16_t next = 0;
     std::uint8_t width = 0;
-    std::optional<zara::loader::RelocationEncoding> encoding;
+    std::optional<rothalyx::loader::RelocationEncoding> encoding;
     std::optional<std::uint64_t> target;
     std::uint32_t auxiliary = 0;
     std::vector<std::uint64_t> segment_addresses;
@@ -58,9 +58,9 @@ bool verify_case(
     const DecodeCase& test_case,
     const std::uint64_t preferred_base
 ) {
-    zara::loader::detail::DecodedMachOChainedFixup decoded;
+    rothalyx::loader::detail::DecodedMachOChainedFixup decoded;
     std::string error;
-    if (!zara::loader::detail::decode_macho_chained_fixup_for_testing(
+    if (!rothalyx::loader::detail::decode_macho_chained_fixup_for_testing(
             test_case.pointer_format,
             test_case.raw_value,
             preferred_base,
@@ -125,7 +125,7 @@ int main() {
             .import_index = 0,
             .next = 3,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChained64,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained64,
             .target = composed64,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -151,7 +151,7 @@ int main() {
             .import_index = 0,
             .next = 1,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChained64Offset,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained64Offset,
             .target = kPreferredBase + composed64,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -164,7 +164,7 @@ int main() {
             .import_index = 0,
             .next = 3,
             .width = 4,
-            .encoding = zara::loader::RelocationEncoding::MachOChained32,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained32,
             .target = 0x0234567ULL,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -190,7 +190,7 @@ int main() {
             .import_index = 0,
             .next = 2,
             .width = 4,
-            .encoding = zara::loader::RelocationEncoding::MachOChained32Cache,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained32Cache,
             .target = kPreferredBase + 0x1234567ULL,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -203,7 +203,7 @@ int main() {
             .import_index = 0,
             .next = 5,
             .width = 4,
-            .encoding = zara::loader::RelocationEncoding::MachOChained32Firmware,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained32Firmware,
             .target = 0x02ABCDEULL,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -216,7 +216,7 @@ int main() {
             .import_index = 0,
             .next = 4,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChained64KernelCache,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChained64KernelCache,
             .target = kPreferredBase + 0x1234567ULL,
             .auxiliary = 2,
             .segment_addresses = {},
@@ -229,7 +229,7 @@ int main() {
             .import_index = 0,
             .next = 7,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedX8664KernelCache,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedX8664KernelCache,
             .target = kPreferredBase + 0x2345678ULL,
             .auxiliary = 1,
             .segment_addresses = {},
@@ -242,7 +242,7 @@ int main() {
             .import_index = 0,
             .next = 3,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64e,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64e,
             .target = composedArm64e,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -255,7 +255,7 @@ int main() {
             .import_index = 0,
             .next = 1,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64e,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64e,
             .target = kPreferredBase + 0x345678ULL,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -281,7 +281,7 @@ int main() {
             .import_index = 0,
             .next = 4,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64eOffset,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64eOffset,
             .target = kPreferredBase + composedArm64e,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -294,7 +294,7 @@ int main() {
             .import_index = 0,
             .next = 5,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64eUserland,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64eUserland,
             .target = kPreferredBase + composedArm64e,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -307,7 +307,7 @@ int main() {
             .import_index = 0,
             .next = 6,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64e,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64e,
             .target = composedArm64e,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -333,7 +333,7 @@ int main() {
             .import_index = 0,
             .next = 2,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64eSharedCache,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64eSharedCache,
             .target = kPreferredBase + kLow34,
             .auxiliary = 0,
             .segment_addresses = {},
@@ -346,7 +346,7 @@ int main() {
             .import_index = 0,
             .next = 1,
             .width = 8,
-            .encoding = zara::loader::RelocationEncoding::MachOChainedArm64eSegmented,
+            .encoding = rothalyx::loader::RelocationEncoding::MachOChainedArm64eSegmented,
             .target = segments[2] + 0x1234ULL,
             .auxiliary = 2,
             .segment_addresses = segments,

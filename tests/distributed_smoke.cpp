@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "zara/distributed/batch_runner.hpp"
+#include "rothalyx/distributed/batch_runner.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -15,15 +15,15 @@ int main(int argc, char** argv) {
     const std::filesystem::path fixture_a = argv[1];
     const std::filesystem::path fixture_b = argv[2];
 
-    const auto output_root = std::filesystem::temp_directory_path() / "zara_distributed_smoke";
+    const auto output_root = std::filesystem::temp_directory_path() / "rothalyx_distributed_smoke";
     std::error_code remove_error;
     std::filesystem::remove_all(output_root, remove_error);
 
     const std::vector<std::filesystem::path> inputs{fixture_a, fixture_b};
-    const auto result = zara::distributed::BatchRunner::analyze(
+    const auto result = rothalyx::distributed::BatchRunner::analyze(
         inputs,
         output_root,
-        zara::distributed::BatchOptions{
+        rothalyx::distributed::BatchOptions{
             .concurrency = 2,
             .shard_count = 1,
             .shard_index = 0,
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         const bool sqlite_missing = std::all_of(
             result.jobs.begin(),
             result.jobs.end(),
-            [](const zara::distributed::BatchJobResult& job) {
+            [](const rothalyx::distributed::BatchJobResult& job) {
                 return !job.success &&
                        (job.error.find("SQLite3") != std::string::npos ||
                         job.error.find("SQLite") != std::string::npos);
@@ -62,11 +62,11 @@ int main(int argc, char** argv) {
     }
 
     std::string error;
-    if (!zara::distributed::BatchRunner::write_manifest(output_root / "manifest.tsv", result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_manifest(output_root / "manifest.tsv", result, error)) {
         std::cerr << "manifest write failed: " << error << '\n';
         return 5;
     }
-    if (!zara::distributed::BatchRunner::write_summary(output_root / "summary.json", result, error)) {
+    if (!rothalyx::distributed::BatchRunner::write_summary(output_root / "summary.json", result, error)) {
         std::cerr << "summary write failed: " << error << '\n';
         return 6;
     }
@@ -79,10 +79,10 @@ int main(int argc, char** argv) {
         return 8;
     }
 
-    const auto shard_result = zara::distributed::BatchRunner::analyze(
+    const auto shard_result = rothalyx::distributed::BatchRunner::analyze(
         inputs,
         output_root / "shard_1",
-        zara::distributed::BatchOptions{
+        rothalyx::distributed::BatchOptions{
             .concurrency = 2,
             .shard_count = 2,
             .shard_index = 1,

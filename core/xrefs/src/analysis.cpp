@@ -1,9 +1,9 @@
-#include "zara/xrefs/analysis.hpp"
+#include "rothalyx/xrefs/analysis.hpp"
 
 #include <algorithm>
 #include <cctype>
 
-namespace zara::xrefs {
+namespace rothalyx::xrefs {
 
 namespace {
 
@@ -206,4 +206,4 @@ std::string_view to_string(const CrossReferenceKind kind) noexcept {
     }
 }
 
-}  // namespace zara::xrefs
+}  // namespace rothalyx::xrefs

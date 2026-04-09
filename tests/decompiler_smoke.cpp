@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 int main() {
     constexpr std::uint64_t kCodeBase = 0x1000;
@@ -29,9 +29,9 @@ int main() {
         0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00,
     };
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".text",
                 .base_address = kCodeBase,
                 .bytes = std::vector<std::byte>(
@@ -39,7 +39,7 @@ int main() {
                     reinterpret_cast<const std::byte*>(code_bytes.data() + code_bytes.size())
                 ),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = true,
@@ -47,7 +47,7 @@ int main() {
             }
         ) ||
         !address_space.map_segment(
-            zara::memory::Segment{
+            rothalyx::memory::Segment{
                 .name = ".rodata",
                 .base_address = kDataBase,
                 .bytes = std::vector<std::byte>(
@@ -55,7 +55,7 @@ int main() {
                     reinterpret_cast<const std::byte*>(data_bytes.data() + data_bytes.size())
                 ),
                 .permissions =
-                    zara::memory::Permissions{
+                    rothalyx::memory::Permissions{
                         .readable = true,
                         .writable = false,
                         .executable = false,
@@ -66,14 +66,14 @@ int main() {
         return 1;
     }
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "synthetic.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kCodeBase,
         kCodeBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kCodeBase,
                 .bytes = std::vector<std::byte>(
@@ -84,7 +84,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".rodata",
                 .virtual_address = kDataBase,
                 .bytes = std::vector<std::byte>(
@@ -98,11 +98,11 @@ int main() {
         }
     );
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto function_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1000; }
     );
     if (function_it == analysis.functions.end()) {
         std::cerr << "failed to find root function\n";

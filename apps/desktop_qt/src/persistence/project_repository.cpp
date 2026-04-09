@@ -1,6 +1,6 @@
-#include "zara/desktop_qt/persistence/project_repository.hpp"
+#include "rothalyx/desktop_qt/persistence/project_repository.hpp"
 
-#include "zara/database/project_store.hpp"
+#include "rothalyx/database/project_store.hpp"
 
 #include <sqlite3.h>
 
@@ -8,7 +8,7 @@
 #include <optional>
 #include <string_view>
 
-namespace zara::desktop_qt::persistence {
+namespace rothalyx::desktop_qt::persistence {
 
 namespace {
 
@@ -145,7 +145,7 @@ bool ProjectRepository::open(std::string& out_error) {
     out_error.clear();
     close();
 
-    zara::database::ProjectStore store(database_path_);
+    rothalyx::database::ProjectStore store(database_path_);
     if (!store.initialize(out_error)) {
         return false;
     }
@@ -1249,8 +1249,8 @@ bool ProjectRepository::save_symbol_rename(
 
 bool ProjectRepository::save_coverage_report(
     int run_id,
-    const zara::security::CrashTrace& trace,
-    const zara::security::FuzzingReport& report,
+    const rothalyx::security::CrashTrace& trace,
+    const rothalyx::security::FuzzingReport& report,
     std::string& out_error
 ) {
     if (!require_open(out_error)) {
@@ -1286,7 +1286,7 @@ bool ProjectRepository::save_coverage_report(
         hints.reserve(report.crash_hints.size());
         for (const auto& hint : report.crash_hints) {
             hints.push_back(
-                hint.title + " [" + std::string(zara::security::to_string(hint.severity)) + "] " + hint.detail
+                hint.title + " [" + std::string(rothalyx::security::to_string(hint.severity)) + "] " + hint.detail
             );
         }
         const std::string crash_hints = join_lines(hints);
@@ -1402,4 +1402,4 @@ bool ProjectRepository::require_open(std::string& out_error) const {
     return false;
 }
 
-}  // namespace zara::desktop_qt::persistence
+}  // namespace rothalyx::desktop_qt::persistence

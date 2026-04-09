@@ -239,10 +239,10 @@ def install_import_guard(allowed_imports):
     def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
         root = name.split(".", 1)[0]
         if root in DENIED_IMPORTS:
-            raise ImportError(f"import of '{root}' is blocked by the Zara plugin sandbox policy")
+            raise ImportError(f"import of '{root}' is blocked by the Rothalyx plugin sandbox policy")
         if level != 0 or root in allowlist:
             return original_import(name, globals, locals, fromlist, level)
-        raise ImportError(f"import of '{root}' is blocked by the Zara plugin sandbox")
+        raise ImportError(f"import of '{root}' is blocked by the Rothalyx plugin sandbox")
 
     builtins.__import__ = guarded_import
 
@@ -261,7 +261,7 @@ def install_restricted_builtins():
     def safe_getattr(obj, name, *default):
         if isinstance(name, str) and name in BLOCKED_ATTRIBUTES:
             raise AttributeError(
-                f"access to '{name}' is blocked by the Zara plugin sandbox"
+                f"access to '{name}' is blocked by the Rothalyx plugin sandbox"
             )
         if default:
             return _real_getattr(obj, name, default[0])
@@ -275,7 +275,7 @@ def install_restricted_builtins():
 
 
 def load_plugin(path):
-    spec = importlib.util.spec_from_file_location("zara_plugin_sandboxed", path)
+    spec = importlib.util.spec_from_file_location("rothalyx_plugin_sandboxed", path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"failed to load plugin spec for {path}")
     module = importlib.util.module_from_spec(spec)

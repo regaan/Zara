@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a defect in ZARA RE FRAMEWORK
+about: Report a defect in ROTHALYX RE FRAMEWORK
 title: "[Bug] "
 labels: ["bug"]
 assignees: []
@@ -14,7 +14,7 @@ Describe the problem clearly and directly.
 
 - OS:
 - Package type: `deb` / `AppImage` / `pacman` / `dmg` / `exe`
-- Zara version:
+- Rothalyx version:
 - Architecture:
 
 ## Steps To Reproduce

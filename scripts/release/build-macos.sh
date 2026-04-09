@@ -11,8 +11,8 @@ cmake_args=(
     -G Ninja
     -DCMAKE_BUILD_TYPE=Release
     -DBUILD_TESTING=OFF
-    -DZARA_BUILD_CLI=ON
-    -DZARA_BUILD_DESKTOP_QT=ON
+    -DROTHALYX_BUILD_CLI=ON
+    -DROTHALYX_BUILD_DESKTOP_QT=ON
 )
 
 if command -v brew >/dev/null 2>&1; then
@@ -23,7 +23,7 @@ elif [[ -n "${CMAKE_PREFIX_PATH:-}" ]]; then
 fi
 
 python3 "$repo_root/scripts/release/generate_icons.py" \
-    "$repo_root/apps/desktop_qt/resources/zara-re-platform.png" \
+    "$repo_root/apps/desktop_qt/resources/rothalyx-re-framework.png" \
     "$repo_root/apps/desktop_qt/resources"
 
 cmake "${cmake_args[@]}"

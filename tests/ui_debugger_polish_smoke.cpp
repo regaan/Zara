@@ -8,14 +8,14 @@
 #include <iostream>
 
 #define private public
-#include "zara/desktop_qt/ui/main_window.hpp"
+#include "rothalyx/desktop_qt/ui/main_window.hpp"
 #undef private
 
 int main(int argc, char** argv) {
     qputenv("QT_QPA_PLATFORM", "offscreen");
     QApplication application(argc, argv);
 
-    zara::desktop_qt::ui::MainWindow window;
+    rothalyx::desktop_qt::ui::MainWindow window;
 
     if (window.debugger_page_ == nullptr || window.debugger_status_label_ == nullptr ||
         window.watch_table_ == nullptr || window.breakpoints_table_ == nullptr ||
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     window.breakpoint_address_edit_->setText("0x401010");
     const QJsonObject payload = window.workspace_payload();
 
-    zara::desktop_qt::ui::MainWindow restored;
+    rothalyx::desktop_qt::ui::MainWindow restored;
     restored.apply_workspace_payload(payload, false);
     if (restored.watch_expressions_.size() != 2 ||
         restored.memory_address_edit_->text() != "0x401000" ||

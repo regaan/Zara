@@ -1,4 +1,4 @@
-#include "zara/decompiler/decompiler.hpp"
+#include "rothalyx/decompiler/decompiler.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-namespace zara::decompiler {
+namespace rothalyx::decompiler {
 
 namespace {
 
@@ -1571,4 +1571,4 @@ DecompiledFunction Decompiler::decompile(
     };
 }
 
-}  // namespace zara::decompiler
+}  // namespace rothalyx::decompiler

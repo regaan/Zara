@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($ArtifactDir)) {
 }
 
 python (Join-Path $RepoRoot "scripts\\release\\generate_icons.py") `
-    (Join-Path $RepoRoot "apps\\desktop_qt\\resources\\zara-re-platform.png") `
+    (Join-Path $RepoRoot "apps\\desktop_qt\\resources\\rothalyx-re-framework.png") `
     (Join-Path $RepoRoot "apps\\desktop_qt\\resources")
 Assert-LastExitCode "Icon generation"
 
@@ -34,8 +34,8 @@ $CmakeArgs = @(
     "-G", "Ninja",
     "-DCMAKE_BUILD_TYPE=Release",
     "-DBUILD_TESTING=OFF",
-    "-DZARA_BUILD_CLI=ON",
-    "-DZARA_BUILD_DESKTOP_QT=ON",
+    "-DROTHALYX_BUILD_CLI=ON",
+    "-DROTHALYX_BUILD_DESKTOP_QT=ON",
     "-DVCPKG_MANIFEST_MODE=OFF"
 )
 

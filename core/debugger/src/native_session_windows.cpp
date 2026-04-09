@@ -1,4 +1,4 @@
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 #if defined(_WIN32)
 
@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace zara::debugger {
+namespace rothalyx::debugger {
 
 namespace {
 
@@ -1062,6 +1062,6 @@ std::unique_ptr<DebugSession> create_windows_debug_session() {
     return std::make_unique<WindowsDbgSession>();
 }
 
-}  // namespace zara::debugger
+}  // namespace rothalyx::debugger
 
 #endif

@@ -9,10 +9,10 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/disasm/disassembler.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -87,7 +87,7 @@ std::filesystem::path write_synthetic_arm_pe() {
 
     std::memcpy(bytes.data() + kCodeOffset, text_bytes.data(), text_bytes.size());
 
-    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "zara_synthetic_arm.exe";
+    const std::filesystem::path output_path = std::filesystem::temp_directory_path() / "rothalyx_synthetic_arm.exe";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -99,18 +99,18 @@ std::filesystem::path write_synthetic_arm_pe() {
 int main() {
     const std::filesystem::path binary_path = write_synthetic_arm_pe();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
     }
 
-    if (image.format() != zara::loader::BinaryFormat::PE) {
+    if (image.format() != rothalyx::loader::BinaryFormat::PE) {
         std::cerr << "expected PE format\n";
         return 2;
     }
-    if (image.architecture() != zara::loader::Architecture::ARM) {
+    if (image.architecture() != rothalyx::loader::Architecture::ARM) {
         std::cerr << "expected ARM architecture\n";
         return 3;
     }
@@ -119,13 +119,13 @@ int main() {
         return 4;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map ARM image\n";
         return 5;
     }
 
-    zara::disasm::Disassembler disassembler;
+    rothalyx::disasm::Disassembler disassembler;
     if (!disassembler.is_supported(image.architecture())) {
         std::cerr << "expected ARM decode support\n";
         return 6;
@@ -136,17 +136,17 @@ int main() {
         std::cerr << "expected real ARM instructions\n";
         return 7;
     }
-    if (instructions.front().mnemonic != "push" || instructions.back().kind != zara::disasm::InstructionKind::Return) {
+    if (instructions.front().mnemonic != "push" || instructions.back().kind != rothalyx::disasm::InstructionKind::Return) {
         std::cerr << "unexpected ARM instruction classification\n";
         return 8;
     }
 
-    const auto program = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto program = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (program.functions.empty() || program.functions.front().entry_address != *image.entry_point()) {
         std::cerr << "expected discovered ARM entry function\n";
         return 9;
     }
-    if (program.functions.front().summary.calling_convention != zara::analysis::CallingConvention::AAPCS32) {
+    if (program.functions.front().summary.calling_convention != rothalyx::analysis::CallingConvention::AAPCS32) {
         std::cerr << "expected AAPCS32 calling convention\n";
         return 10;
     }

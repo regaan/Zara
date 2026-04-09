@@ -1,11 +1,11 @@
-#include "zara/desktop_qt/app/analysis_runner.hpp"
+#include "rothalyx/desktop_qt/app/analysis_runner.hpp"
 
 #include <algorithm>
 #include <thread>
 
-#include "zara/database/project_store.hpp"
+#include "rothalyx/database/project_store.hpp"
 
-namespace zara::desktop_qt::app {
+namespace rothalyx::desktop_qt::app {
 
 namespace {
 
@@ -103,4 +103,4 @@ bool AnalysisRunner::analyze_binary_to_project(
     return true;
 }
 
-}  // namespace zara::desktop_qt::app
+}  // namespace rothalyx::desktop_qt::app

@@ -1,4 +1,4 @@
-#include "zara/diff/engine.hpp"
+#include "rothalyx/diff/engine.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace zara::diff {
+namespace rothalyx::diff {
 
 namespace {
 
@@ -282,4 +282,4 @@ std::string_view to_string(const ChangeKind kind) noexcept {
     }
 }
 
-}  // namespace zara::diff
+}  // namespace rothalyx::diff

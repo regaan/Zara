@@ -93,13 +93,13 @@ def load_release_body(version: str, notes_dir: Path) -> str:
 
     return (
         f"# What's New in {version}\n\n"
-        "This release ships the current Zara desktop application, core analysis stack, "
+        "This release ships the current Rothalyx desktop application, core analysis stack, "
         "SDK surface, and cross-platform packaging artifacts.\n"
     )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render GitHub release notes for a tagged Zara release.")
+    parser = argparse.ArgumentParser(description="Render GitHub release notes for a tagged Rothalyx release.")
     parser.add_argument("--version", required=True, help="Version or tag name, for example v1.0.0")
     parser.add_argument("--repository", required=True, help="GitHub repository in owner/name form")
     parser.add_argument("--assets-dir", required=True, help="Directory that contains packaged release assets")

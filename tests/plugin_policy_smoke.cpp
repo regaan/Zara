@@ -3,12 +3,12 @@
 #include <iostream>
 #include <string>
 
-#include "zara/plugins/manager.hpp"
+#include "rothalyx/plugins/manager.hpp"
 
 namespace {
 
 std::filesystem::path stage_plugin_fixture(const std::filesystem::path& plugin_directory, const std::string& suffix) {
-    const auto root = std::filesystem::temp_directory_path() / ("zara_plugin_policy_" + suffix);
+    const auto root = std::filesystem::temp_directory_path() / ("rothalyx_plugin_policy_" + suffix);
     std::error_code error;
     std::filesystem::remove_all(root, error);
     std::filesystem::create_directories(root, error);
@@ -25,11 +25,11 @@ std::filesystem::path stage_plugin_fixture(const std::filesystem::path& plugin_d
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "usage: zara_plugin_policy_smoke <denied-fixtures> <unsandboxed-fixtures>\n";
+        std::cerr << "usage: rothalyx_plugin_policy_smoke <denied-fixtures> <unsandboxed-fixtures>\n";
         return 1;
     }
 
-    zara::plugins::PluginManager manager;
+    rothalyx::plugins::PluginManager manager;
     if (!manager.is_available()) {
         std::cerr << "plugin manager is unavailable\n";
         return 2;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    unsetenv("ZARA_ENABLE_UNSANDBOXED_PLUGINS");
+    unsetenv("ROTHALYX_ENABLE_UNSANDBOXED_PLUGINS");
     error.clear();
     const auto unsandboxed_root = stage_plugin_fixture(std::filesystem::absolute(argv[2]), "unsandboxed");
     if (manager.load_all(unsandboxed_root, error)) {

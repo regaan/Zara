@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ROTHALYX RE FRAMEWORK
+GenericName=Reverse Engineering Platform
+Comment=Native reverse engineering workstation for binary analysis, decompilation, and debugging
+Exec=rothalyx_desktop_qt %F
+Icon=rothalyx-re-framework
+Terminal=false
+Categories=Development;Debugger;Utility;
+Keywords=reverse engineering;binary analysis;disassembler;decompiler;debugger;security;
+StartupNotify=true

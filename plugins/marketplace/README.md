@@ -1,6 +1,6 @@
-# Zara Plugin Marketplace
+# Rothalyx Plugin Marketplace
 
-This directory is the local marketplace root used by Zara's plugin manager.
+This directory is the local marketplace root used by Rothalyx's plugin manager.
 
 Expected layout:
 

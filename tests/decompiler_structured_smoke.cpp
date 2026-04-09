@@ -6,8 +6,8 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -55,15 +55,15 @@ int main() {
     write_value<std::uint64_t>(table_bytes, 0, 0x1030);
     write_value<std::uint64_t>(table_bytes, 8, 0x1036);
 
-    zara::memory::AddressSpace address_space;
-    const auto image = zara::loader::BinaryImage::from_components(
+    rothalyx::memory::AddressSpace address_space;
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "decompiler-structured.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86_64,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86_64,
         kTextBase,
         0x1002,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(text_bytes),
@@ -71,7 +71,7 @@ int main() {
                 .writable = false,
                 .executable = true,
             },
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".rodata",
                 .virtual_address = kTableBase,
                 .bytes = table_bytes,
@@ -82,12 +82,12 @@ int main() {
         },
         {},
         {
-            zara::loader::ExportedSymbol{
+            rothalyx::loader::ExportedSymbol{
                 .name = "loop_fn",
                 .address = 0x1002,
                 .size = static_cast<std::uint64_t>(loop_bytes.size()),
             },
-            zara::loader::ExportedSymbol{
+            rothalyx::loader::ExportedSymbol{
                 .name = "switch_fn",
                 .address = 0x1020,
                 .size = static_cast<std::uint64_t>(switch_bytes.size()),
@@ -100,16 +100,16 @@ int main() {
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto loop_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.name == "loop_fn"; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.name == "loop_fn"; }
     );
     const auto switch_it = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.name == "switch_fn"; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.name == "switch_fn"; }
     );
     if (loop_it == analysis.functions.end() || switch_it == analysis.functions.end()) {
         std::cerr << "missing exported functions in analysis\n";

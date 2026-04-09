@@ -4,9 +4,9 @@
 #include <iostream>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -22,7 +22,7 @@ std::vector<std::byte> to_bytes(const std::vector<std::uint8_t>& values) {
 int main() {
     constexpr std::uint64_t kTextBase = 0x1000;
 
-    zara::analysis::Analyzer::clear_cache();
+    rothalyx::analysis::Analyzer::clear_cache();
 
     std::vector<std::uint8_t> code_bytes{
         0x55,
@@ -44,14 +44,14 @@ int main() {
         }
     );
 
-    const auto image = zara::loader::BinaryImage::from_components(
+    const auto image = rothalyx::loader::BinaryImage::from_components(
         "signature-discovery.bin",
-        zara::loader::BinaryFormat::Raw,
-        zara::loader::Architecture::X86,
+        rothalyx::loader::BinaryFormat::Raw,
+        rothalyx::loader::Architecture::X86,
         kTextBase,
         kTextBase,
         {
-            zara::loader::Section{
+            rothalyx::loader::Section{
                 .name = ".text",
                 .virtual_address = kTextBase,
                 .bytes = to_bytes(code_bytes),
@@ -62,17 +62,17 @@ int main() {
         }
     );
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map signature discovery image\n";
         return 1;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto signature_function = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1020; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1020; }
     );
     if (signature_function == analysis.functions.end()) {
         std::cerr << "expected signature-only function at 0x1020\n";
@@ -82,7 +82,7 @@ int main() {
     const auto heuristic_false_positive = std::find_if(
         analysis.functions.begin(),
         analysis.functions.end(),
-        [](const zara::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1022; }
+        [](const rothalyx::analysis::DiscoveredFunction& function) { return function.entry_address == 0x1022; }
     );
     if (heuristic_false_positive != analysis.functions.end()) {
         std::cerr << "heuristic scan should not accept nested hotpatch prologue at 0x1022\n";

@@ -3,21 +3,21 @@
 #include <string>
 #include <vector>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 #if __has_include(<sqlite3.h>)
 #include <sqlite3.h>
-#define ZARA_TEST_HAS_SQLITE 1
+#define ROTHALYX_TEST_HAS_SQLITE 1
 #else
-#define ZARA_TEST_HAS_SQLITE 0
+#define ROTHALYX_TEST_HAS_SQLITE 0
 #endif
 
 namespace {
 
-#if ZARA_TEST_HAS_SQLITE
+#if ROTHALYX_TEST_HAS_SQLITE
 bool query_text(sqlite3* database, const char* sql, std::string& out_value) {
     sqlite3_stmt* statement = nullptr;
     if (sqlite3_prepare_v2(database, sql, -1, &statement, nullptr) != SQLITE_OK) {
@@ -64,22 +64,22 @@ bool table_has_column(sqlite3* database, const char* table_name, const char* col
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_database_persistence_smoke <binary>\n";
+        std::cerr << "usage: rothalyx_database_persistence_smoke <binary>\n";
         return 1;
     }
 
-#if !ZARA_TEST_HAS_SQLITE
+#if !ROTHALYX_TEST_HAS_SQLITE
     std::cout << "sqlite headers unavailable; skipping persistence smoke\n";
     return 0;
 #else
     const std::filesystem::path binary_path = std::filesystem::absolute(argv[1]);
-    const std::filesystem::path database_path = std::filesystem::temp_directory_path() / "zara_persistence_smoke.sqlite";
+    const std::filesystem::path database_path = std::filesystem::temp_directory_path() / "rothalyx_persistence_smoke.sqlite";
     std::filesystem::remove(database_path);
 
-    zara::loader::BinaryImage image;
-    zara::memory::AddressSpace address_space;
+    rothalyx::loader::BinaryImage image;
+    rothalyx::memory::AddressSpace address_space;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         std::cerr << "load_from_file failed: " << error << '\n';
         return 2;
     }
@@ -88,8 +88,8 @@ int main(int argc, char** argv) {
         return 3;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
-    zara::database::ProjectStore store(database_path);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
+    rothalyx::database::ProjectStore store(database_path);
     if (!store.save_program_analysis(image, analysis, error)) {
         std::cerr << "save_program_analysis failed: " << error << '\n';
         return 4;

@@ -13,7 +13,7 @@
       "binaryDir": "${sourceDir}/build/dev",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "ZARA_BUILD_CLI": "ON"
+        "ROTHALYX_BUILD_CLI": "ON"
       }
     },
     {
@@ -24,10 +24,10 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_TESTING": "OFF",
-        "ZARA_BUILD_CLI": "OFF",
-        "ZARA_BUILD_DESKTOP_QT": "OFF",
-        "ZARA_BUILD_FUZZING": "ON",
-        "ZARA_ENABLE_SANITIZERS": "ON"
+        "ROTHALYX_BUILD_CLI": "OFF",
+        "ROTHALYX_BUILD_DESKTOP_QT": "OFF",
+        "ROTHALYX_BUILD_FUZZING": "ON",
+        "ROTHALYX_ENABLE_SANITIZERS": "ON"
       }
     }
   ],

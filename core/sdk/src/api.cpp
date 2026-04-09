@@ -1,12 +1,12 @@
-#include "zara/sdk/api.h"
+#include "rothalyx/sdk/api.h"
 
-#include "zara/ai/assistant.hpp"
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/ai/assistant.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
 #include <sqlite3.h>
 #endif
 
@@ -21,7 +21,7 @@
 
 namespace {
 
-constexpr const char* kSdkVersionString = "1.0.1";
+constexpr const char* kSdkVersionString = "1.0.3";
 
 void write_error(const std::string& message, char* buffer, const std::size_t buffer_size) {
     if (buffer == nullptr || buffer_size == 0) {
@@ -33,27 +33,27 @@ void write_error(const std::string& message, char* buffer, const std::size_t buf
     buffer[copy_size] = '\0';
 }
 
-zara::ai::AssistantOptions convert_ai_options(const zara_ai_options_t* options) {
+rothalyx::ai::AssistantOptions convert_ai_options(const rothalyx_ai_options_t* options) {
     if (options == nullptr) {
-        return zara::ai::AssistantOptions{};
+        return rothalyx::ai::AssistantOptions{};
     }
 
-    zara::ai::AssistantOptions converted;
+    rothalyx::ai::AssistantOptions converted;
     const std::string_view backend = options->backend == nullptr ? std::string_view{} : std::string_view(options->backend);
     if (backend == "openai") {
-        converted.backend = zara::ai::AssistantBackend::OpenAI;
+        converted.backend = rothalyx::ai::AssistantBackend::OpenAI;
     } else if (backend == "anthropic") {
-        converted.backend = zara::ai::AssistantBackend::Anthropic;
+        converted.backend = rothalyx::ai::AssistantBackend::Anthropic;
     } else if (backend == "gemini") {
-        converted.backend = zara::ai::AssistantBackend::Gemini;
+        converted.backend = rothalyx::ai::AssistantBackend::Gemini;
     } else if (backend == "openai_compatible") {
-        converted.backend = zara::ai::AssistantBackend::OpenAICompatible;
+        converted.backend = rothalyx::ai::AssistantBackend::OpenAICompatible;
     } else if (backend == "local_llm") {
-        converted.backend = zara::ai::AssistantBackend::LocalLLM;
+        converted.backend = rothalyx::ai::AssistantBackend::LocalLLM;
     } else if (backend == "auto") {
-        converted.backend = zara::ai::AssistantBackend::Auto;
+        converted.backend = rothalyx::ai::AssistantBackend::Auto;
     } else {
-        converted.backend = zara::ai::AssistantBackend::Heuristic;
+        converted.backend = rothalyx::ai::AssistantBackend::Heuristic;
     }
 
     const bool has_model_config =
@@ -84,21 +84,21 @@ zara::ai::AssistantOptions convert_ai_options(const zara_ai_options_t* options) 
             }
         };
 
-        if (converted.backend == zara::ai::AssistantBackend::Anthropic) {
-            zara::ai::AnthropicOptions anthropic;
+        if (converted.backend == rothalyx::ai::AssistantBackend::Anthropic) {
+            rothalyx::ai::AnthropicOptions anthropic;
             assign_common_model_config(anthropic);
             converted.anthropic = std::move(anthropic);
-        } else if (converted.backend == zara::ai::AssistantBackend::Gemini) {
-            zara::ai::GeminiOptions gemini;
+        } else if (converted.backend == rothalyx::ai::AssistantBackend::Gemini) {
+            rothalyx::ai::GeminiOptions gemini;
             assign_common_model_config(gemini);
             converted.gemini = std::move(gemini);
-        } else if (converted.backend == zara::ai::AssistantBackend::OpenAICompatible ||
-                   converted.backend == zara::ai::AssistantBackend::LocalLLM) {
-            zara::ai::CompatibleModelOptions compatible;
+        } else if (converted.backend == rothalyx::ai::AssistantBackend::OpenAICompatible ||
+                   converted.backend == rothalyx::ai::AssistantBackend::LocalLLM) {
+            rothalyx::ai::CompatibleModelOptions compatible;
             assign_common_model_config(compatible);
             converted.compatible = std::move(compatible);
         } else {
-            zara::ai::OpenAIOptions openai;
+            rothalyx::ai::OpenAIOptions openai;
             assign_common_model_config(openai);
             if (options->organization != nullptr) {
                 openai.organization = options->organization;
@@ -113,7 +113,7 @@ zara::ai::AssistantOptions convert_ai_options(const zara_ai_options_t* options) 
     return converted;
 }
 
-#if defined(ZARA_HAS_SQLITE)
+#if defined(ROTHALYX_HAS_SQLITE)
 class Statement {
 public:
     Statement(sqlite3* database, const char* sql, std::string& out_error) {
@@ -217,7 +217,7 @@ struct ProjectHandle {
     std::vector<InsightData> ai_insights;
 };
 
-ProjectHandle* as_handle(zara_project_t* project) {
+ProjectHandle* as_handle(rothalyx_project_t* project) {
     return reinterpret_cast<ProjectHandle*>(project);
 }
 
@@ -229,7 +229,7 @@ bool ensure_open(ProjectHandle* project, std::string& out_error) {
     return true;
 }
 
-void fill_run_record(const RunData& source, zara_run_overview_t* target) {
+void fill_run_record(const RunData& source, rothalyx_run_overview_t* target) {
     target->run_id = source.run_id;
     target->binary_path = source.binary_path.c_str();
     target->binary_format = source.binary_format.c_str();
@@ -248,7 +248,7 @@ void fill_run_record(const RunData& source, zara_run_overview_t* target) {
     target->poc_scaffold = source.poc_scaffold.c_str();
 }
 
-void fill_function_record(const FunctionData& source, zara_function_record_t* target) {
+void fill_function_record(const FunctionData& source, rothalyx_function_record_t* target) {
     target->name = source.name.c_str();
     target->section_name = source.section_name.c_str();
     target->entry_address = source.entry_address;
@@ -260,7 +260,7 @@ void fill_function_record(const FunctionData& source, zara_function_record_t* ta
     target->analysis_summary = source.analysis_summary.c_str();
 }
 
-void fill_ai_record(const InsightData& source, zara_ai_insight_record_t* target) {
+void fill_ai_record(const InsightData& source, rothalyx_ai_insight_record_t* target) {
     target->function_entry = source.function_entry;
     target->current_name = source.current_name.c_str();
     target->suggested_name = source.suggested_name.c_str();
@@ -409,95 +409,95 @@ bool load_ai_insights(ProjectHandle* project, const int run_id, std::string& out
 
 extern "C" {
 
-const char* zara_sdk_version_string(void) {
+const char* rothalyx_sdk_version_string(void) {
     return kSdkVersionString;
 }
 
-uint32_t zara_sdk_abi_version(void) {
-    return ZARA_SDK_ABI_VERSION;
+uint32_t rothalyx_sdk_abi_version(void) {
+    return ROTHALYX_SDK_ABI_VERSION;
 }
 
-const char* zara_sdk_supported_plugin_api_version(void) {
-    return ZARA_SDK_PLUGIN_API_VERSION;
+const char* rothalyx_sdk_supported_plugin_api_version(void) {
+    return ROTHALYX_SDK_PLUGIN_API_VERSION;
 }
 
-const char* zara_sdk_status_string(const zara_sdk_status_t status) {
+const char* rothalyx_sdk_status_string(const rothalyx_sdk_status_t status) {
     switch (status) {
-    case ZARA_SDK_STATUS_OK:
+    case ROTHALYX_SDK_STATUS_OK:
         return "ok";
-    case ZARA_SDK_STATUS_INVALID_ARGUMENT:
+    case ROTHALYX_SDK_STATUS_INVALID_ARGUMENT:
         return "invalid_argument";
-    case ZARA_SDK_STATUS_NOT_FOUND:
+    case ROTHALYX_SDK_STATUS_NOT_FOUND:
         return "not_found";
-    case ZARA_SDK_STATUS_UNSUPPORTED:
+    case ROTHALYX_SDK_STATUS_UNSUPPORTED:
         return "unsupported";
-    case ZARA_SDK_STATUS_ERROR:
+    case ROTHALYX_SDK_STATUS_ERROR:
     default:
         return "error";
     }
 }
 
-zara_sdk_status_t zara_sdk_analyze_binary(
+rothalyx_sdk_status_t rothalyx_sdk_analyze_binary(
     const char* binary_path,
     const char* project_db_path,
-    const zara_ai_options_t* ai_options,
+    const rothalyx_ai_options_t* ai_options,
     char* error_buffer,
     const size_t error_buffer_size
 ) {
     if (binary_path == nullptr || project_db_path == nullptr) {
         write_error("binary_path and project_db_path are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
     std::string error;
-    zara::loader::BinaryImage image;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    rothalyx::loader::BinaryImage image;
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         write_error("Failed to map the binary image into the analysis address space.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
 
-    const auto program = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto program = rothalyx::analysis::Analyzer::analyze(image, address_space);
     const auto assistant_options = convert_ai_options(ai_options);
-    zara::database::ProjectStore store(project_db_path);
+    rothalyx::database::ProjectStore store(project_db_path);
     if (!store.save_program_analysis(image, program, &assistant_options, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
 
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 }
 
-zara_sdk_status_t zara_sdk_open_project(
+rothalyx_sdk_status_t rothalyx_sdk_open_project(
     const char* project_db_path,
-    zara_project_t** out_project,
+    rothalyx_project_t** out_project,
     char* error_buffer,
     const size_t error_buffer_size
 ) {
     if (project_db_path == nullptr || out_project == nullptr) {
         write_error("project_db_path and out_project are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     auto* project = new ProjectHandle{};
     project->database_path = project_db_path;
 
-    zara::database::ProjectStore store(project->database_path);
+    rothalyx::database::ProjectStore store(project->database_path);
     std::string error;
     if (!store.initialize(error)) {
         write_error(error, error_buffer, error_buffer_size);
         delete project;
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
 
     if (sqlite3_open_v2(
@@ -512,17 +512,17 @@ zara_sdk_status_t zara_sdk_open_project(
         }
         delete project;
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
 
-    *out_project = reinterpret_cast<zara_project_t*>(project);
+    *out_project = reinterpret_cast<rothalyx_project_t*>(project);
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 
-void zara_sdk_close_project(zara_project_t* project) {
-#if defined(ZARA_HAS_SQLITE)
+void rothalyx_sdk_close_project(rothalyx_project_t* project) {
+#if defined(ROTHALYX_HAS_SQLITE)
     if (auto* handle = as_handle(project); handle != nullptr && handle->database != nullptr) {
         sqlite3_close(handle->database);
         handle->database = nullptr;
@@ -531,36 +531,36 @@ void zara_sdk_close_project(zara_project_t* project) {
     delete as_handle(project);
 }
 
-zara_sdk_status_t zara_sdk_get_latest_run(
-    zara_project_t* project,
-    zara_run_overview_t* out_run,
+rothalyx_sdk_status_t rothalyx_sdk_get_latest_run(
+    rothalyx_project_t* project,
+    rothalyx_run_overview_t* out_run,
     char* error_buffer,
     const size_t error_buffer_size
 ) {
     if (project == nullptr || out_run == nullptr) {
         write_error("project and out_run are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     std::string error;
     auto* handle = as_handle(project);
     if (!load_latest_run(handle, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return error.empty() ? ZARA_SDK_STATUS_NOT_FOUND : ZARA_SDK_STATUS_ERROR;
+        return error.empty() ? ROTHALYX_SDK_STATUS_NOT_FOUND : ROTHALYX_SDK_STATUS_ERROR;
     }
 
     fill_run_record(*handle->latest_run, out_run);
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 
-zara_sdk_status_t zara_sdk_get_function_count(
-    zara_project_t* project,
+rothalyx_sdk_status_t rothalyx_sdk_get_function_count(
+    rothalyx_project_t* project,
     const int run_id,
     size_t* out_count,
     char* error_buffer,
@@ -568,60 +568,60 @@ zara_sdk_status_t zara_sdk_get_function_count(
 ) {
     if (project == nullptr || out_count == nullptr) {
         write_error("project and out_count are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     std::string error;
     auto* handle = as_handle(project);
     if (!load_functions(handle, run_id, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
     *out_count = handle->functions.size();
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 
-zara_sdk_status_t zara_sdk_get_function_at(
-    zara_project_t* project,
+rothalyx_sdk_status_t rothalyx_sdk_get_function_at(
+    rothalyx_project_t* project,
     const int run_id,
     const size_t index,
-    zara_function_record_t* out_function,
+    rothalyx_function_record_t* out_function,
     char* error_buffer,
     const size_t error_buffer_size
 ) {
     if (project == nullptr || out_function == nullptr) {
         write_error("project and out_function are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     std::string error;
     auto* handle = as_handle(project);
     if (!load_functions(handle, run_id, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
     if (index >= handle->functions.size()) {
         write_error("Requested function index is out of range.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_NOT_FOUND;
+        return ROTHALYX_SDK_STATUS_NOT_FOUND;
     }
     fill_function_record(handle->functions[index], out_function);
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 
-zara_sdk_status_t zara_sdk_get_ai_insight_count(
-    zara_project_t* project,
+rothalyx_sdk_status_t rothalyx_sdk_get_ai_insight_count(
+    rothalyx_project_t* project,
     const int run_id,
     size_t* out_count,
     char* error_buffer,
@@ -629,55 +629,55 @@ zara_sdk_status_t zara_sdk_get_ai_insight_count(
 ) {
     if (project == nullptr || out_count == nullptr) {
         write_error("project and out_count are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     std::string error;
     auto* handle = as_handle(project);
     if (!load_ai_insights(handle, run_id, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
     *out_count = handle->ai_insights.size();
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 
-zara_sdk_status_t zara_sdk_get_ai_insight_at(
-    zara_project_t* project,
+rothalyx_sdk_status_t rothalyx_sdk_get_ai_insight_at(
+    rothalyx_project_t* project,
     const int run_id,
     const size_t index,
-    zara_ai_insight_record_t* out_insight,
+    rothalyx_ai_insight_record_t* out_insight,
     char* error_buffer,
     const size_t error_buffer_size
 ) {
     if (project == nullptr || out_insight == nullptr) {
         write_error("project and out_insight are required.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_INVALID_ARGUMENT;
+        return ROTHALYX_SDK_STATUS_INVALID_ARGUMENT;
     }
 
-#if !defined(ZARA_HAS_SQLITE)
+#if !defined(ROTHALYX_HAS_SQLITE)
     write_error("This build does not include SQLite-backed project APIs.", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_UNSUPPORTED;
+    return ROTHALYX_SDK_STATUS_UNSUPPORTED;
 #else
     std::string error;
     auto* handle = as_handle(project);
     if (!load_ai_insights(handle, run_id, error)) {
         write_error(error, error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_ERROR;
+        return ROTHALYX_SDK_STATUS_ERROR;
     }
     if (index >= handle->ai_insights.size()) {
         write_error("Requested AI insight index is out of range.", error_buffer, error_buffer_size);
-        return ZARA_SDK_STATUS_NOT_FOUND;
+        return ROTHALYX_SDK_STATUS_NOT_FOUND;
     }
     fill_ai_record(handle->ai_insights[index], out_insight);
     write_error("", error_buffer, error_buffer_size);
-    return ZARA_SDK_STATUS_OK;
+    return ROTHALYX_SDK_STATUS_OK;
 #endif
 }
 

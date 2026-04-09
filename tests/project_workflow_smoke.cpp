@@ -3,28 +3,28 @@
 #include <iostream>
 #include <string>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/database/project_store.hpp"
-#include "zara/desktop_qt/persistence/project_repository.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
-#include "zara/security/workflow.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/database/project_store.hpp"
+#include "rothalyx/desktop_qt/persistence/project_repository.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
+#include "rothalyx/security/workflow.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_project_workflow_smoke <binary>\n";
+        std::cerr << "usage: rothalyx_project_workflow_smoke <binary>\n";
         return 1;
     }
 
     const std::filesystem::path binary_path = std::filesystem::absolute(argv[1]);
     const std::filesystem::path database_path =
-        std::filesystem::temp_directory_path() / "zara_project_workflow_smoke.sqlite";
+        std::filesystem::temp_directory_path() / "rothalyx_project_workflow_smoke.sqlite";
     std::filesystem::remove(database_path);
 
-    zara::loader::BinaryImage image;
-    zara::memory::AddressSpace address_space;
+    rothalyx::loader::BinaryImage image;
+    rothalyx::memory::AddressSpace address_space;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(binary_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(binary_path, image, error)) {
         std::cerr << "load_from_file failed: " << error << '\n';
         return 2;
     }
@@ -33,20 +33,20 @@ int main(int argc, char** argv) {
         return 3;
     }
 
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
     if (analysis.functions.empty() || analysis.functions.front().graph.blocks().empty() ||
         analysis.functions.front().graph.blocks().front().instructions.empty()) {
         std::cerr << "expected at least one discovered function with instructions\n";
         return 4;
     }
 
-    zara::database::ProjectStore store(database_path);
+    rothalyx::database::ProjectStore store(database_path);
     if (!store.save_program_analysis(image, analysis, error)) {
         std::cerr << "initial save_program_analysis failed: " << error << '\n';
         return 5;
     }
 
-    zara::desktop_qt::persistence::ProjectRepository repository(database_path);
+    rothalyx::desktop_qt::persistence::ProjectRepository repository(database_path);
     if (!repository.open(error)) {
         std::cerr << "repository open failed: " << error << '\n';
         return 6;
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     const auto& first_function = analysis.functions.front();
     const auto comment_address = first_function.graph.blocks().front().instructions.front().address;
 
-    zara::desktop_qt::persistence::CommentRecord comment;
+    rothalyx::desktop_qt::persistence::CommentRecord comment;
     comment.function_entry = first_function.entry_address;
     comment.address = comment_address;
     comment.scope = "instruction";
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
         return 8;
     }
 
-    zara::desktop_qt::persistence::TypeAnnotationRecord annotation;
+    rothalyx::desktop_qt::persistence::TypeAnnotationRecord annotation;
     annotation.function_entry = first_function.entry_address;
     annotation.target_kind = "argument";
     annotation.symbol_name = "arg_0";
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
         return 9;
     }
 
-    zara::desktop_qt::persistence::SymbolRenameRecord rename;
+    rothalyx::desktop_qt::persistence::SymbolRenameRecord rename;
     rename.function_entry = first_function.entry_address;
     rename.address = first_function.entry_address;
     rename.target_kind = "function";
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     const auto renamed_function = std::find_if(
         renamed_functions.begin(),
         renamed_functions.end(),
-        [&](const zara::desktop_qt::persistence::FunctionSummary& function) {
+        [&](const rothalyx::desktop_qt::persistence::FunctionSummary& function) {
             return function.entry_address == first_function.entry_address;
         }
     );
@@ -116,11 +116,11 @@ int main(int argc, char** argv) {
         return 12;
     }
 
-    zara::security::CrashTrace trace;
+    rothalyx::security::CrashTrace trace;
     trace.input_label = "seed-a";
     trace.crash_address = comment_address;
     trace.coverage_addresses = {comment_address};
-    const auto coverage_report = zara::security::Workflow::analyze_fuzzing_surface(binary_path, analysis, trace);
+    const auto coverage_report = rothalyx::security::Workflow::analyze_fuzzing_surface(binary_path, analysis, trace);
     if (!repository.save_coverage_report(run->run_id, trace, coverage_report, error)) {
         std::cerr << "save_coverage_report failed: " << error << '\n';
         return 13;
@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
     const auto carried_function = std::find_if(
         carried_functions.begin(),
         carried_functions.end(),
-        [&](const zara::desktop_qt::persistence::FunctionSummary& function) {
+        [&](const rothalyx::desktop_qt::persistence::FunctionSummary& function) {
             return function.entry_address == first_function.entry_address;
         }
     );

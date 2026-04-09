@@ -1,4 +1,4 @@
-#include "zara/ssa/builder.hpp"
+#include "rothalyx/ssa/builder.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -9,7 +9,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace zara::ssa {
+namespace rothalyx::ssa {
 
 namespace {
 
@@ -403,4 +403,4 @@ std::string format_phi(const PhiNode& phi) {
     return stream.str();
 }
 
-}  // namespace zara::ssa
+}  // namespace rothalyx::ssa

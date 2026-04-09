@@ -1,13 +1,13 @@
-#include "zara/disasm/disassembler.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
 
-#if defined(ZARA_HAS_CAPSTONE)
+#if defined(ROTHALYX_HAS_CAPSTONE)
 #include <capstone/capstone.h>
 #if defined(CS_ARCH_RISCV) && defined(CS_MODE_RISCV64) && defined(CS_MODE_RISCVC) && \
     defined(RISCV_OP_INVALID) && defined(RISCV_OP_REG) && defined(RISCV_OP_IMM) && \
     defined(RISCV_OP_MEM) && defined(RISCV_REG_INVALID)
-#define ZARA_CAPSTONE_HAS_RISCV 1
+#define ROTHALYX_CAPSTONE_HAS_RISCV 1
 #else
-#define ZARA_CAPSTONE_HAS_RISCV 0
+#define ROTHALYX_CAPSTONE_HAS_RISCV 0
 #endif
 #endif
 
@@ -17,7 +17,7 @@
 #include <optional>
 #include <sstream>
 
-namespace zara::disasm {
+namespace rothalyx::disasm {
 
 namespace {
 
@@ -140,7 +140,7 @@ std::vector<Instruction> decode_as_data_bytes(
     return instructions;
 }
 
-#if defined(ZARA_HAS_CAPSTONE)
+#if defined(ROTHALYX_HAS_CAPSTONE)
 bool capstone_mode_for_architecture(const loader::Architecture architecture, cs_arch& out_arch, cs_mode& out_mode) {
     switch (architecture) {
     case loader::Architecture::X86:
@@ -160,7 +160,7 @@ bool capstone_mode_for_architecture(const loader::Architecture architecture, cs_
         out_mode = static_cast<cs_mode>(CS_MODE_ARM | CS_MODE_LITTLE_ENDIAN);
         return true;
     case loader::Architecture::RISCV64:
-#if ZARA_CAPSTONE_HAS_RISCV
+#if ROTHALYX_CAPSTONE_HAS_RISCV
         out_arch = CS_ARCH_RISCV;
         out_mode = static_cast<cs_mode>(CS_MODE_RISCV64 | CS_MODE_RISCVC | CS_MODE_LITTLE_ENDIAN);
         return true;
@@ -313,7 +313,7 @@ std::optional<std::uint64_t> extract_control_flow_target(
             }
         }
     } else if (architecture == loader::Architecture::RISCV64) {
-#if ZARA_CAPSTONE_HAS_RISCV
+#if ROTHALYX_CAPSTONE_HAS_RISCV
         const cs_riscv& riscv = instruction.detail->riscv;
         for (std::uint8_t operand_index = 0; operand_index < riscv.op_count; ++operand_index) {
             const cs_riscv_op& operand = riscv.operands[operand_index];
@@ -415,7 +415,7 @@ std::vector<std::uint64_t> extract_data_references(
             }
         }
     } else if (architecture == loader::Architecture::RISCV64) {
-#if ZARA_CAPSTONE_HAS_RISCV
+#if ROTHALYX_CAPSTONE_HAS_RISCV
         const cs_riscv& riscv = instruction.detail->riscv;
         for (std::uint8_t operand_index = 0; operand_index < riscv.op_count; ++operand_index) {
             const cs_riscv_op& operand = riscv.operands[operand_index];
@@ -592,7 +592,7 @@ std::vector<Operand> extract_operands(
             operands.push_back(std::move(operand));
         }
     } else if (architecture == loader::Architecture::RISCV64) {
-#if ZARA_CAPSTONE_HAS_RISCV
+#if ROTHALYX_CAPSTONE_HAS_RISCV
         const cs_riscv& riscv = instruction.detail->riscv;
         operands.reserve(riscv.op_count);
 
@@ -717,7 +717,7 @@ std::vector<Instruction> Disassembler::decode(
         return {};
     }
 
-#if defined(ZARA_HAS_CAPSTONE)
+#if defined(ROTHALYX_HAS_CAPSTONE)
     cs_arch capstone_arch = CS_ARCH_X86;
     cs_mode capstone_mode = CS_MODE_LITTLE_ENDIAN;
     if (capstone_mode_for_architecture(architecture, capstone_arch, capstone_mode)) {
@@ -770,7 +770,7 @@ std::vector<Instruction> Disassembler::decode(
 }
 
 bool Disassembler::is_supported(const loader::Architecture architecture) const noexcept {
-#if defined(ZARA_HAS_CAPSTONE)
+#if defined(ROTHALYX_HAS_CAPSTONE)
     cs_arch capstone_arch = CS_ARCH_X86;
     cs_mode capstone_mode = CS_MODE_LITTLE_ENDIAN;
     return capstone_mode_for_architecture(architecture, capstone_arch, capstone_mode);
@@ -802,4 +802,4 @@ const ArchitectureDescriptor* describe_architecture(const loader::Architecture a
     }
 }
 
-}  // namespace zara::disasm
+}  // namespace rothalyx::disasm

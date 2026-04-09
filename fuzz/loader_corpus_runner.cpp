@@ -9,8 +9,8 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -101,8 +101,8 @@ std::vector<std::filesystem::path> collect_files(const std::filesystem::path& ro
     return files;
 }
 
-void exercise_loaded_image(zara::loader::BinaryImage image, const std::uint64_t rebase_step, Summary& summary) {
-    zara::memory::AddressSpace address_space;
+void exercise_loaded_image(rothalyx::loader::BinaryImage image, const std::uint64_t rebase_step, Summary& summary) {
+    rothalyx::memory::AddressSpace address_space;
     if (address_space.map_image(image)) {
         ++summary.map_successes;
         if (const auto entry = image.entry_point(); entry.has_value()) {
@@ -116,7 +116,7 @@ void exercise_loaded_image(zara::loader::BinaryImage image, const std::uint64_t 
     }
 
     image.apply_rebase(image.base_address() + rebase_step);
-    zara::memory::AddressSpace rebased_space;
+    rothalyx::memory::AddressSpace rebased_space;
     if (!rebased_space.map_image(image)) {
         return;
     }
@@ -129,7 +129,7 @@ void exercise_loaded_image(zara::loader::BinaryImage image, const std::uint64_t 
 
 void print_usage() {
     std::cerr
-        << "usage: zara_loader_corpus_runner <corpus-path> [--repeat N] [--rebase-step VALUE] [--verbose]\n"
+        << "usage: rothalyx_loader_corpus_runner <corpus-path> [--repeat N] [--rebase-step VALUE] [--verbose]\n"
         << "  corpus-path   file or directory of binary inputs\n"
         << "  --repeat N    iterate the corpus N times (default: 1)\n"
         << "  --rebase-step VALUE  rebase loaded images by VALUE bytes after mapping (default: 0x100000)\n"
@@ -157,10 +157,10 @@ int main(int argc, char** argv) {
         for (const auto& file : files) {
             ++summary.files_seen;
 
-            zara::loader::BinaryImage image;
+            rothalyx::loader::BinaryImage image;
             std::string error;
             try {
-                if (!zara::loader::BinaryImage::load_from_file(file, image, error)) {
+                if (!rothalyx::loader::BinaryImage::load_from_file(file, image, error)) {
                     ++summary.load_failures;
                     if (options.verbose) {
                         std::cout << "[loader-fuzz] reject " << file << " :: " << error << '\n';
@@ -173,9 +173,9 @@ int main(int argc, char** argv) {
                     std::cout << "[loader-fuzz] load "
                               << file
                               << " :: format="
-                              << zara::loader::to_string(image.format())
+                              << rothalyx::loader::to_string(image.format())
                               << " arch="
-                              << zara::loader::to_string(image.architecture())
+                              << rothalyx::loader::to_string(image.architecture())
                               << '\n';
                 }
                 exercise_loaded_image(image, options.rebase_step, summary);

@@ -1,4 +1,4 @@
-#include "zara/ai/assistant.hpp"
+#include "rothalyx/ai/assistant.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -10,11 +10,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#if defined(ZARA_HAS_CURL)
+#if defined(ROTHALYX_HAS_CURL)
 #include <curl/curl.h>
 #endif
 
-namespace zara::ai {
+namespace rothalyx::ai {
 
 namespace {
 
@@ -726,7 +726,7 @@ std::string build_openai_request_json(
             << "],"
             << "\"text\":{\"format\":{"
             << "\"type\":\"json_schema\","
-            << "\"name\":\"zara_function_insights\","
+            << "\"name\":\"rothalyx_function_insights\","
             << "\"strict\":true,"
             << "\"schema\":{"
             << "\"type\":\"object\","
@@ -1198,38 +1198,38 @@ std::optional<OpenAIOptions> resolve_openai_options(const AssistantOptions& opti
     }
 
     if (resolved.api_key.empty()) {
-        const auto api_key = environment_string("ZARA_OPENAI_API_KEY");
+        const auto api_key = environment_string("ROTHALYX_OPENAI_API_KEY");
         if (api_key.has_value()) {
             resolved.api_key = *api_key;
         }
     }
     if (resolved.model.empty()) {
-        if (const auto model = environment_string("ZARA_OPENAI_MODEL"); model.has_value()) {
+        if (const auto model = environment_string("ROTHALYX_OPENAI_MODEL"); model.has_value()) {
             resolved.model = *model;
         }
     }
     if (resolved.base_url.empty()) {
-        if (const auto base_url = environment_string("ZARA_OPENAI_BASE_URL"); base_url.has_value()) {
+        if (const auto base_url = environment_string("ROTHALYX_OPENAI_BASE_URL"); base_url.has_value()) {
             resolved.base_url = *base_url;
         }
     }
     if (resolved.organization.empty()) {
-        if (const auto organization = environment_string("ZARA_OPENAI_ORGANIZATION"); organization.has_value()) {
+        if (const auto organization = environment_string("ROTHALYX_OPENAI_ORGANIZATION"); organization.has_value()) {
             resolved.organization = *organization;
         }
     }
     if (resolved.project.empty()) {
-        if (const auto project = environment_string("ZARA_OPENAI_PROJECT"); project.has_value()) {
+        if (const auto project = environment_string("ROTHALYX_OPENAI_PROJECT"); project.has_value()) {
             resolved.project = *project;
         }
     }
     if (resolved.max_functions == 0) {
-        if (const auto max_functions = environment_size("ZARA_OPENAI_MAX_FUNCTIONS"); max_functions.has_value()) {
+        if (const auto max_functions = environment_size("ROTHALYX_OPENAI_MAX_FUNCTIONS"); max_functions.has_value()) {
             resolved.max_functions = *max_functions;
         }
     }
     if (resolved.timeout_ms <= 0) {
-        if (const auto timeout = environment_long("ZARA_OPENAI_TIMEOUT_MS"); timeout.has_value()) {
+        if (const auto timeout = environment_long("ROTHALYX_OPENAI_TIMEOUT_MS"); timeout.has_value()) {
             resolved.timeout_ms = *timeout;
         }
     }
@@ -1250,32 +1250,32 @@ std::optional<AnthropicOptions> resolve_anthropic_options(const AssistantOptions
         resolved = *options.anthropic;
     }
     if (resolved.api_key.empty()) {
-        if (const auto api_key = environment_string("ZARA_ANTHROPIC_API_KEY"); api_key.has_value()) {
+        if (const auto api_key = environment_string("ROTHALYX_ANTHROPIC_API_KEY"); api_key.has_value()) {
             resolved.api_key = *api_key;
         }
     }
     if (resolved.model.empty()) {
-        if (const auto model = environment_string("ZARA_ANTHROPIC_MODEL"); model.has_value()) {
+        if (const auto model = environment_string("ROTHALYX_ANTHROPIC_MODEL"); model.has_value()) {
             resolved.model = *model;
         }
     }
     if (resolved.base_url.empty()) {
-        if (const auto base_url = environment_string("ZARA_ANTHROPIC_BASE_URL"); base_url.has_value()) {
+        if (const auto base_url = environment_string("ROTHALYX_ANTHROPIC_BASE_URL"); base_url.has_value()) {
             resolved.base_url = *base_url;
         }
     }
     if (resolved.max_functions == 0) {
-        if (const auto max_functions = environment_size("ZARA_ANTHROPIC_MAX_FUNCTIONS"); max_functions.has_value()) {
+        if (const auto max_functions = environment_size("ROTHALYX_ANTHROPIC_MAX_FUNCTIONS"); max_functions.has_value()) {
             resolved.max_functions = *max_functions;
         }
     }
     if (resolved.timeout_ms <= 0) {
-        if (const auto timeout = environment_long("ZARA_ANTHROPIC_TIMEOUT_MS"); timeout.has_value()) {
+        if (const auto timeout = environment_long("ROTHALYX_ANTHROPIC_TIMEOUT_MS"); timeout.has_value()) {
             resolved.timeout_ms = *timeout;
         }
     }
     if (resolved.api_version.empty()) {
-        if (const auto api_version = environment_string("ZARA_ANTHROPIC_API_VERSION"); api_version.has_value()) {
+        if (const auto api_version = environment_string("ROTHALYX_ANTHROPIC_API_VERSION"); api_version.has_value()) {
             resolved.api_version = *api_version;
         }
     }
@@ -1296,27 +1296,27 @@ std::optional<GeminiOptions> resolve_gemini_options(const AssistantOptions& opti
         resolved = *options.gemini;
     }
     if (resolved.api_key.empty()) {
-        if (const auto api_key = environment_string("ZARA_GEMINI_API_KEY"); api_key.has_value()) {
+        if (const auto api_key = environment_string("ROTHALYX_GEMINI_API_KEY"); api_key.has_value()) {
             resolved.api_key = *api_key;
         }
     }
     if (resolved.model.empty()) {
-        if (const auto model = environment_string("ZARA_GEMINI_MODEL"); model.has_value()) {
+        if (const auto model = environment_string("ROTHALYX_GEMINI_MODEL"); model.has_value()) {
             resolved.model = *model;
         }
     }
     if (resolved.base_url.empty()) {
-        if (const auto base_url = environment_string("ZARA_GEMINI_BASE_URL"); base_url.has_value()) {
+        if (const auto base_url = environment_string("ROTHALYX_GEMINI_BASE_URL"); base_url.has_value()) {
             resolved.base_url = *base_url;
         }
     }
     if (resolved.max_functions == 0) {
-        if (const auto max_functions = environment_size("ZARA_GEMINI_MAX_FUNCTIONS"); max_functions.has_value()) {
+        if (const auto max_functions = environment_size("ROTHALYX_GEMINI_MAX_FUNCTIONS"); max_functions.has_value()) {
             resolved.max_functions = *max_functions;
         }
     }
     if (resolved.timeout_ms <= 0) {
-        if (const auto timeout = environment_long("ZARA_GEMINI_TIMEOUT_MS"); timeout.has_value()) {
+        if (const auto timeout = environment_long("ROTHALYX_GEMINI_TIMEOUT_MS"); timeout.has_value()) {
             resolved.timeout_ms = *timeout;
         }
     }
@@ -1337,16 +1337,16 @@ std::optional<CompatibleModelOptions> resolve_compatible_options(const Assistant
         resolved = *options.compatible;
     }
 
-    const char* api_key_var = options.backend == AssistantBackend::LocalLLM ? "ZARA_LOCAL_LLM_API_KEY"
-                                                                            : "ZARA_COMPATIBLE_API_KEY";
-    const char* model_var = options.backend == AssistantBackend::LocalLLM ? "ZARA_LOCAL_LLM_MODEL"
-                                                                          : "ZARA_COMPATIBLE_MODEL";
-    const char* base_url_var = options.backend == AssistantBackend::LocalLLM ? "ZARA_LOCAL_LLM_BASE_URL"
-                                                                             : "ZARA_COMPATIBLE_BASE_URL";
+    const char* api_key_var = options.backend == AssistantBackend::LocalLLM ? "ROTHALYX_LOCAL_LLM_API_KEY"
+                                                                            : "ROTHALYX_COMPATIBLE_API_KEY";
+    const char* model_var = options.backend == AssistantBackend::LocalLLM ? "ROTHALYX_LOCAL_LLM_MODEL"
+                                                                          : "ROTHALYX_COMPATIBLE_MODEL";
+    const char* base_url_var = options.backend == AssistantBackend::LocalLLM ? "ROTHALYX_LOCAL_LLM_BASE_URL"
+                                                                             : "ROTHALYX_COMPATIBLE_BASE_URL";
     const char* max_functions_var =
-        options.backend == AssistantBackend::LocalLLM ? "ZARA_LOCAL_LLM_MAX_FUNCTIONS" : "ZARA_COMPATIBLE_MAX_FUNCTIONS";
+        options.backend == AssistantBackend::LocalLLM ? "ROTHALYX_LOCAL_LLM_MAX_FUNCTIONS" : "ROTHALYX_COMPATIBLE_MAX_FUNCTIONS";
     const char* timeout_var =
-        options.backend == AssistantBackend::LocalLLM ? "ZARA_LOCAL_LLM_TIMEOUT_MS" : "ZARA_COMPATIBLE_TIMEOUT_MS";
+        options.backend == AssistantBackend::LocalLLM ? "ROTHALYX_LOCAL_LLM_TIMEOUT_MS" : "ROTHALYX_COMPATIBLE_TIMEOUT_MS";
 
     if (resolved.api_key.empty()) {
         if (const auto api_key = environment_string(api_key_var); api_key.has_value()) {
@@ -1428,7 +1428,7 @@ std::vector<FunctionInsight> merge_model_insights(
     return insights;
 }
 
-#if defined(ZARA_HAS_CURL)
+#if defined(ROTHALYX_HAS_CURL)
 std::size_t curl_write_callback(char* data, const std::size_t size, const std::size_t nmemb, void* user_data) {
     auto* output = static_cast<std::string*>(user_data);
     output->append(data, size * nmemb);
@@ -1583,7 +1583,7 @@ std::vector<FunctionInsight> Assistant::analyze_program(
 
     std::unique_ptr<ModelTransport> owned_transport;
     if (transport == nullptr) {
-#if defined(ZARA_HAS_CURL)
+#if defined(ROTHALYX_HAS_CURL)
         owned_transport = std::make_unique<CurlModelTransport>();
         transport = owned_transport.get();
 #else
@@ -1637,7 +1637,7 @@ std::vector<FunctionInsight> Assistant::analyze_program(
     if (parsed.empty()) {
         if (out_metadata != nullptr) {
             out_metadata->backend = "heuristic";
-            out_metadata->warnings.push_back("The model response could not be parsed into Zara AI insight records.");
+            out_metadata->warnings.push_back("The model response could not be parsed into Rothalyx AI insight records.");
         }
         return insights;
     }
@@ -1667,7 +1667,7 @@ std::vector<FunctionInsight> Assistant::analyze_program(
 
 AssistantOptions Assistant::options_from_environment() {
     AssistantOptions options;
-    if (const auto backend = environment_string("ZARA_AI_BACKEND"); backend.has_value()) {
+    if (const auto backend = environment_string("ROTHALYX_AI_BACKEND"); backend.has_value()) {
         if (*backend == "openai") {
             options.backend = AssistantBackend::OpenAI;
         } else if (*backend == "anthropic") {
@@ -1683,15 +1683,15 @@ AssistantOptions Assistant::options_from_environment() {
         } else {
             options.backend = AssistantBackend::Heuristic;
         }
-    } else if (environment_string("ZARA_OPENAI_API_KEY").has_value()) {
+    } else if (environment_string("ROTHALYX_OPENAI_API_KEY").has_value()) {
         options.backend = AssistantBackend::Auto;
-    } else if (environment_string("ZARA_ANTHROPIC_API_KEY").has_value()) {
+    } else if (environment_string("ROTHALYX_ANTHROPIC_API_KEY").has_value()) {
         options.backend = AssistantBackend::Anthropic;
-    } else if (environment_string("ZARA_GEMINI_API_KEY").has_value()) {
+    } else if (environment_string("ROTHALYX_GEMINI_API_KEY").has_value()) {
         options.backend = AssistantBackend::Gemini;
-    } else if (environment_string("ZARA_COMPATIBLE_MODEL").has_value() || environment_string("ZARA_COMPATIBLE_BASE_URL").has_value()) {
+    } else if (environment_string("ROTHALYX_COMPATIBLE_MODEL").has_value() || environment_string("ROTHALYX_COMPATIBLE_BASE_URL").has_value()) {
         options.backend = AssistantBackend::OpenAICompatible;
-    } else if (environment_string("ZARA_LOCAL_LLM_MODEL").has_value() || environment_string("ZARA_LOCAL_LLM_BASE_URL").has_value()) {
+    } else if (environment_string("ROTHALYX_LOCAL_LLM_MODEL").has_value() || environment_string("ROTHALYX_LOCAL_LLM_BASE_URL").has_value()) {
         options.backend = AssistantBackend::LocalLLM;
     }
 
@@ -1734,4 +1734,4 @@ std::string_view to_string(const AssistantBackend backend) noexcept {
     }
 }
 
-}  // namespace zara::ai
+}  // namespace rothalyx::ai

@@ -1,18 +1,18 @@
-# ZARA RE FRAMEWORK
+# ROTHALYX RE FRAMEWORK
 
 <p align="center">
-  <img src="apps/desktop_qt/resources/zara-re-platform.png" alt="ZARA RE FRAMEWORK logo" width="180">
+  <img src="apps/desktop_qt/resources/rothalyx-re-framework.png" alt="ROTHALYX RE FRAMEWORK logo" width="180">
 </p>
 
-ZARA RE FRAMEWORK is a native reverse engineering framework and desktop workstation for binary analysis, disassembly, graph reconstruction, decompilation, debugging, scripting, and AI-assisted analyst workflows.
+ROTHALYX RE FRAMEWORK is a native reverse engineering framework and desktop workstation for binary analysis, disassembly, graph reconstruction, decompilation, debugging, scripting, and AI-assisted analyst workflows.
 
 The repository contains the C++ core, the native Qt desktop application, the CLI, the public SDK, fuzzing harnesses, and the release packaging used to ship desktop builds for Linux, macOS, and Windows.
 
 **Developed by Regaan R, security researcher and founder of ROT Independent Security Research Lab.**
 
-## What Zara Does
+## What Rothalyx Does
 
-Zara is built around a single native analysis pipeline:
+Rothalyx is built around a single native analysis pipeline:
 
 1. load a binary into a normalized image model
 2. map sections and symbols into a virtual address space
@@ -58,24 +58,24 @@ Run it from a build tree:
 ```bash
 cmake --preset dev
 cmake --build --preset dev
-./build/dev/apps/desktop_qt/zara_desktop_qt
+./build/dev/apps/desktop_qt/rothalyx_desktop_qt
 ```
 
 Open a binary directly:
 
 ```bash
-./build/dev/apps/desktop_qt/zara_desktop_qt /path/to/binary.exe
+./build/dev/apps/desktop_qt/rothalyx_desktop_qt /path/to/binary.exe
 ```
 
 Open a saved project database:
 
 ```bash
-./build/dev/apps/desktop_qt/zara_desktop_qt /path/to/project.sqlite
+./build/dev/apps/desktop_qt/rothalyx_desktop_qt /path/to/project.sqlite
 ```
 
 ## AI Integration
 
-AI is optional. Zara works without a hosted model.
+AI is optional. Rothalyx works without a hosted model.
 
 The desktop app supports:
 
@@ -128,16 +128,16 @@ ctest --test-dir build/dev --output-on-failure
 Basic analysis:
 
 ```bash
-./build/dev/apps/cli/zara_cli /path/to/binary
+./build/dev/apps/cli/rothalyx_cli /path/to/binary
 ```
 
 AI-assisted analysis with a hosted provider:
 
 ```bash
-export ZARA_AI_BACKEND=openai
-export ZARA_OPENAI_API_KEY=...
-export ZARA_OPENAI_MODEL=gpt-5-mini
-./build/dev/apps/cli/zara_cli ai-model /path/to/binary [/path/to/project.sqlite]
+export ROTHALYX_AI_BACKEND=openai
+export ROTHALYX_OPENAI_API_KEY=...
+export ROTHALYX_OPENAI_MODEL=gpt-5-mini
+./build/dev/apps/cli/rothalyx_cli ai-model /path/to/binary [/path/to/project.sqlite]
 ```
 
 ## Packages and Releases
@@ -189,4 +189,4 @@ makepkg -si
 
 ## License
 
-Zara is licensed under the GNU Affero General Public License v3.0 or later.
+Rothalyx is licensed under the GNU Affero General Public License v3.0 or later.

@@ -1,22 +1,22 @@
 add_executable(
-    zara_loader_corpus_runner
+    rothalyx_loader_corpus_runner
     loader_corpus_runner.cpp
 )
 target_link_libraries(
-    zara_loader_corpus_runner
+    rothalyx_loader_corpus_runner
     PRIVATE
-        zara_loader
-        zara_memory
+        rothalyx_loader
+        rothalyx_memory
 )
-zara_apply_defaults(zara_loader_corpus_runner)
+rothalyx_apply_defaults(rothalyx_loader_corpus_runner)
 
 add_executable(
-    zara_trace_corpus_runner
+    rothalyx_trace_corpus_runner
     trace_corpus_runner.cpp
 )
 target_link_libraries(
-    zara_trace_corpus_runner
+    rothalyx_trace_corpus_runner
     PRIVATE
-        zara_security
+        rothalyx_security
 )
-zara_apply_defaults(zara_trace_corpus_runner)
+rothalyx_apply_defaults(rothalyx_trace_corpus_runner)

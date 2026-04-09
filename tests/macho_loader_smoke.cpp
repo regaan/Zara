@@ -10,9 +10,9 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/disasm/disassembler.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/disasm/disassembler.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 namespace {
 
@@ -150,7 +150,7 @@ std::filesystem::path write_synthetic_macho() {
     write_ascii(bytes, kStringTableOffset, strings);
 
     const std::filesystem::path output_path =
-        std::filesystem::temp_directory_path() / "zara_synthetic_arm64.macho";
+        std::filesystem::temp_directory_path() / "rothalyx_synthetic_arm64.macho";
     std::ofstream output(output_path, std::ios::binary | std::ios::trunc);
     output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
@@ -162,23 +162,23 @@ std::filesystem::path write_synthetic_macho() {
 int main() {
     const std::filesystem::path binary_path = write_synthetic_macho();
 
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(
+    if (!rothalyx::loader::BinaryImage::load_from_file(
             binary_path,
             image,
             error,
-            zara::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x200000000ULL}
+            rothalyx::loader::LoadOptions{.base_address = 0x1000, .rebase_address = 0x200000000ULL}
         )) {
         std::cerr << "load failed: " << error << '\n';
         return 1;
     }
 
-    if (image.format() != zara::loader::BinaryFormat::MachO) {
+    if (image.format() != rothalyx::loader::BinaryFormat::MachO) {
         std::cerr << "expected Mach-O format\n";
         return 2;
     }
-    if (image.architecture() != zara::loader::Architecture::ARM64) {
+    if (image.architecture() != rothalyx::loader::Architecture::ARM64) {
         std::cerr << "expected arm64 architecture\n";
         return 3;
     }
@@ -202,7 +202,7 @@ int main() {
     const auto imported = std::find_if(
         image.imports().begin(),
         image.imports().end(),
-        [](const zara::loader::ImportedSymbol& symbol) {
+        [](const rothalyx::loader::ImportedSymbol& symbol) {
             return symbol.library == "libSystem.B.dylib" &&
                    symbol.name == "puts" &&
                    symbol.address == 0x200001000ULL;
@@ -216,7 +216,7 @@ int main() {
     const auto exported = std::find_if(
         image.exports().begin(),
         image.exports().end(),
-        [](const zara::loader::ExportedSymbol& symbol) {
+        [](const rothalyx::loader::ExportedSymbol& symbol) {
             return symbol.name == "main" && symbol.address == 0x200000200ULL;
         }
     );
@@ -228,7 +228,7 @@ int main() {
     const auto data_section = std::find_if(
         image.sections().begin(),
         image.sections().end(),
-        [](const zara::loader::Section& section) {
+        [](const rothalyx::loader::Section& section) {
             return section.name == "__DATA_CONST:__la_symbol_ptr";
         }
     );
@@ -244,13 +244,13 @@ int main() {
         return 11;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map Mach-O image\n";
         return 12;
     }
 
-    zara::disasm::Disassembler disassembler;
+    rothalyx::disasm::Disassembler disassembler;
     if (!disassembler.is_supported(image.architecture())) {
         std::cerr << "expected ARM64 decode support\n";
         return 13;

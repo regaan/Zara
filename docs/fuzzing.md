@@ -1,12 +1,12 @@
 # Fuzzing
 
-Zara ships with sanitizer-backed corpus runners for parser and trace-ingestion coverage. The goal is to catch hostile-input bugs before they ship, not to optimize for vanity fuzzing numbers.
+Rothalyx ships with sanitizer-backed corpus runners for parser and trace-ingestion coverage. The goal is to catch hostile-input bugs before they ship, not to optimize for vanity fuzzing numbers.
 
 ## Current Runners
 
-- `zara_loader_corpus_runner`  
+- `rothalyx_loader_corpus_runner`  
   Exercises binary loading, section mapping, symbol population, and rebasing against a corpus of valid and malformed binaries.
-- `zara_trace_corpus_runner`  
+- `rothalyx_trace_corpus_runner`  
   Exercises trace parsing against valid, truncated, oversized, and malformed trace inputs.
 
 ## Build
@@ -21,7 +21,7 @@ cmake --build --preset asan-fuzz
 ## Prepare a Corpus
 
 ```bash
-./fuzz/prepare_corpus.sh /tmp/zara-fuzz-corpus
+./fuzz/prepare_corpus.sh /tmp/rothalyx-fuzz-corpus
 ```
 
 That creates:
@@ -34,8 +34,8 @@ That creates:
 ## Run a Quick Pass
 
 ```bash
-./build/asan-fuzz/fuzz/zara_loader_corpus_runner /tmp/zara-fuzz-corpus/loader --repeat 5
-./build/asan-fuzz/fuzz/zara_trace_corpus_runner /tmp/zara-fuzz-corpus/trace --repeat 10
+./build/asan-fuzz/fuzz/rothalyx_loader_corpus_runner /tmp/rothalyx-fuzz-corpus/loader --repeat 5
+./build/asan-fuzz/fuzz/rothalyx_trace_corpus_runner /tmp/rothalyx-fuzz-corpus/trace --repeat 10
 ```
 
 Malformed inputs are expected to be rejected cleanly. A crash, sanitizer finding, or unexpected termination is a failure.
@@ -43,14 +43,14 @@ Malformed inputs are expected to be rejected cleanly. A crash, sanitizer finding
 ## Sustained Campaign
 
 ```bash
-./fuzz/run_sustained_campaign.sh ./build/asan-fuzz /tmp/zara-fuzz-corpus /tmp/zara-fuzz-out
+./fuzz/run_sustained_campaign.sh ./build/asan-fuzz /tmp/rothalyx-fuzz-corpus /tmp/rothalyx-fuzz-out
 ```
 
 Useful overrides:
 
 ```bash
-ZARA_FUZZ_REPEAT_LOADER=50 \
-ZARA_FUZZ_REPEAT_TRACE=100 \
+ROTHALYX_FUZZ_REPEAT_LOADER=50 \
+ROTHALYX_FUZZ_REPEAT_TRACE=100 \
 ./fuzz/run_sustained_campaign.sh
 ```
 

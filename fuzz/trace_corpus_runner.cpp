@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-#include "zara/security/workflow.hpp"
+#include "rothalyx/security/workflow.hpp"
 
 namespace {
 
@@ -82,7 +82,7 @@ std::vector<std::filesystem::path> collect_files(const std::filesystem::path& ro
 
 void print_usage() {
     std::cerr
-        << "usage: zara_trace_corpus_runner <corpus-path> [--repeat N] [--verbose]\n"
+        << "usage: rothalyx_trace_corpus_runner <corpus-path> [--repeat N] [--verbose]\n"
         << "  corpus-path   file or directory of trace/text inputs\n"
         << "  --repeat N    iterate the corpus N times (default: 1)\n"
         << "  --verbose     print per-file outcomes\n";
@@ -109,10 +109,10 @@ int main(int argc, char** argv) {
         for (const auto& file : files) {
             ++summary.files_seen;
 
-            zara::security::CrashTrace trace;
+            rothalyx::security::CrashTrace trace;
             std::string error;
             try {
-                if (!zara::security::Workflow::parse_trace_file(file, trace, error)) {
+                if (!rothalyx::security::Workflow::parse_trace_file(file, trace, error)) {
                     ++summary.parse_failures;
                     if (options.verbose) {
                         std::cout << "[trace-fuzz] reject " << file << " :: " << error << '\n';

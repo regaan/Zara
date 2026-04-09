@@ -8,6 +8,6 @@
   "sandboxed": true,
   "timeout_ms": 3000,
   "allow_imports": [],
-  "allow_env": ["ZARA_PLUGIN_OUT"],
+  "allow_env": ["ROTHALYX_PLUGIN_OUT"],
   "hooks": ["on_startup", "on_binary_analyzed"]
 }

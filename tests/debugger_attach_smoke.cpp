@@ -8,11 +8,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_debugger_attach_smoke <debuggee>\n";
+        std::cerr << "usage: rothalyx_debugger_attach_smoke <debuggee>\n";
         return 1;
     }
 
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
 
-    const auto debugger = zara::debugger::DebugSession::create_native();
+    const auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     }
 
     std::string error;
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->attach(child, event, error)) {
         kill(child, SIGKILL);
         waitpid(child, nullptr, 0);
@@ -47,12 +47,12 @@ int main(int argc, char** argv) {
         return 4;
     }
 
-    if (event.reason != zara::debugger::StopReason::Attach) {
-        std::cerr << "expected attach stop, got " << zara::debugger::to_string(event.reason) << '\n';
+    if (event.reason != rothalyx::debugger::StopReason::Attach) {
+        std::cerr << "expected attach stop, got " << rothalyx::debugger::to_string(event.reason) << '\n';
         return 5;
     }
 
-    zara::debugger::RegisterState registers;
+    rothalyx::debugger::RegisterState registers;
     if (!debugger->read_registers(registers, error)) {
         std::cerr << "read_registers failed: " << error << '\n';
         return 6;

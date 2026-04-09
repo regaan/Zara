@@ -2,10 +2,10 @@
 #include <iostream>
 #include <string_view>
 
-#include "zara/debugger/session.hpp"
+#include "rothalyx/debugger/session.hpp"
 
 int main() {
-    const auto shapes = zara::debugger::DebugSession::target_shapes();
+    const auto shapes = rothalyx::debugger::DebugSession::target_shapes();
     if (shapes.size() != 3) {
         std::cerr << "expected three debugger target shapes\n";
         return 1;
@@ -14,26 +14,26 @@ int main() {
     const auto has_windows = std::any_of(
         shapes.begin(),
         shapes.end(),
-        [](const zara::debugger::TargetShape& shape) {
-            return shape.platform == zara::debugger::TargetPlatform::Windows &&
-                   shape.backend == zara::debugger::BackendKind::WindowsDbgEng;
+        [](const rothalyx::debugger::TargetShape& shape) {
+            return shape.platform == rothalyx::debugger::TargetPlatform::Windows &&
+                   shape.backend == rothalyx::debugger::BackendKind::WindowsDbgEng;
         }
     );
     const auto has_linux = std::any_of(
         shapes.begin(),
         shapes.end(),
-        [](const zara::debugger::TargetShape& shape) {
-            return shape.platform == zara::debugger::TargetPlatform::Linux &&
-                   shape.backend == zara::debugger::BackendKind::LinuxPtrace &&
+        [](const rothalyx::debugger::TargetShape& shape) {
+            return shape.platform == rothalyx::debugger::TargetPlatform::Linux &&
+                   shape.backend == rothalyx::debugger::BackendKind::LinuxPtrace &&
                    shape.implemented;
         }
     );
     const auto has_macos = std::any_of(
         shapes.begin(),
         shapes.end(),
-        [](const zara::debugger::TargetShape& shape) {
-            return shape.platform == zara::debugger::TargetPlatform::MacOS &&
-                   shape.backend == zara::debugger::BackendKind::MacOSLldb;
+        [](const rothalyx::debugger::TargetShape& shape) {
+            return shape.platform == rothalyx::debugger::TargetPlatform::MacOS &&
+                   shape.backend == rothalyx::debugger::BackendKind::MacOSLldb;
         }
     );
 
@@ -45,14 +45,14 @@ int main() {
     const auto selected_count = static_cast<int>(std::count_if(
         shapes.begin(),
         shapes.end(),
-        [](const zara::debugger::TargetShape& shape) { return shape.selected_on_host; }
+        [](const rothalyx::debugger::TargetShape& shape) { return shape.selected_on_host; }
     ));
     if (selected_count != 1) {
         std::cerr << "expected exactly one host-selected debugger target shape\n";
         return 3;
     }
 
-    const auto native = zara::debugger::DebugSession::create_native();
+    const auto native = rothalyx::debugger::DebugSession::create_native();
     if (!native) {
         std::cerr << "failed to create native debugger session\n";
         return 4;

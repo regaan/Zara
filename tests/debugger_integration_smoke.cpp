@@ -2,21 +2,21 @@
 #include <iostream>
 #include <string>
 
-#include "zara/analysis/program_analysis.hpp"
-#include "zara/debugger/session.hpp"
-#include "zara/loader/binary_image.hpp"
-#include "zara/memory/address_space.hpp"
+#include "rothalyx/analysis/program_analysis.hpp"
+#include "rothalyx/debugger/session.hpp"
+#include "rothalyx/loader/binary_image.hpp"
+#include "rothalyx/memory/address_space.hpp"
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        std::cerr << "usage: zara_debugger_integration_smoke <debuggee>\n";
+        std::cerr << "usage: rothalyx_debugger_integration_smoke <debuggee>\n";
         return 1;
     }
 
     const std::filesystem::path debuggee_path(argv[1]);
-    zara::loader::BinaryImage image;
+    rothalyx::loader::BinaryImage image;
     std::string error;
-    if (!zara::loader::BinaryImage::load_from_file(debuggee_path, image, error)) {
+    if (!rothalyx::loader::BinaryImage::load_from_file(debuggee_path, image, error)) {
         std::cerr << "load failed: " << error << '\n';
         return 2;
     }
@@ -25,20 +25,20 @@ int main(int argc, char** argv) {
         return 3;
     }
 
-    zara::memory::AddressSpace address_space;
+    rothalyx::memory::AddressSpace address_space;
     if (!address_space.map_image(image)) {
         std::cerr << "failed to map debuggee image\n";
         return 4;
     }
-    const auto analysis = zara::analysis::Analyzer::analyze(image, address_space);
+    const auto analysis = rothalyx::analysis::Analyzer::analyze(image, address_space);
 
-    const auto debugger = zara::debugger::DebugSession::create_native();
+    const auto debugger = rothalyx::debugger::DebugSession::create_native();
     if (!debugger->is_supported()) {
         std::cerr << "debugger backend is unavailable\n";
         return 5;
     }
 
-    zara::debugger::StopEvent event;
+    rothalyx::debugger::StopEvent event;
     if (!debugger->launch(debuggee_path, {}, event, error)) {
         std::cerr << "launch failed: " << error << '\n';
         return 6;
@@ -52,8 +52,8 @@ int main(int argc, char** argv) {
         return 8;
     }
 
-    zara::debugger::RuntimeSnapshot snapshot;
-    if (!zara::debugger::capture_runtime_snapshot(*debugger, image, analysis, event, snapshot, error)) {
+    rothalyx::debugger::RuntimeSnapshot snapshot;
+    if (!rothalyx::debugger::capture_runtime_snapshot(*debugger, image, analysis, event, snapshot, error)) {
         std::cerr << "runtime snapshot failed: " << error << '\n';
         return 9;
     }

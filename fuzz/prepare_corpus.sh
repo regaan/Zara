@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-out_root="${1:-/tmp/zara-fuzz-corpus}"
+out_root="${1:-/tmp/rothalyx-fuzz-corpus}"
 loader_dir="$out_root/loader"
 trace_dir="$out_root/trace"
 
